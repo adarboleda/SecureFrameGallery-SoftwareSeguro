@@ -76,11 +76,26 @@ async def get_my_album_files(album_id: str, user_id: str, response: Response):
 
     result_files = []
     for file in files_data.data:
-        if file["status"] == "clean":
-            url = supabase.storage.from_("secure-gallery-images").get_public_url(file["storage_path"])
+        # Always try public URL first (works if bucket is public)
+        public_url = supabase.storage.from_("secure-gallery-images").get_public_url(file["storage_path"])
+        
+        if file["status"] != "clean":
+            # Also generate signed URL for private/quarantined files (300 seconds)
+            try:
+                signed_response = supabase.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
+                # supabase-py v2 returns object, v1 returns dict
+                if hasattr(signed_response, "signed_url"):
+                    signed_url = signed_response.signed_url
+                elif isinstance(signed_response, dict):
+                    signed_url = signed_response.get("signedURL") or signed_response.get("signedUrl") or ""
+                else:
+                    signed_url = ""
+                url = signed_url if signed_url else public_url
+            except Exception:
+                url = public_url
         else:
-            signed = supabase.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
-            url = signed.get("signedURL") or signed.get("signedUrl") or ""
+            url = public_url
+            
         result_files.append({
             "id": file["id"],
             "url": url,

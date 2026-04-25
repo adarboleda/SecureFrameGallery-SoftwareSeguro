@@ -71,7 +71,14 @@ def setup_test_environment():
         
         if "secure-gallery-images" not in bucket_names:
             supabase.storage.create_bucket("secure-gallery-images", {"public": True})
-            print("   [Éxito] Bucket 'secure-gallery-images' creado.")
+            print("   [Éxito] Bucket 'secure-gallery-images' creado (público).")
+        else:
+            # Asegurarse de que el bucket sea público
+            try:
+                supabase.storage.update_bucket("secure-gallery-images", {"public": True})
+                print("   [Éxito] Bucket 'secure-gallery-images' verificado y puesto en modo público.")
+            except Exception:
+                print("   [Info] El bucket ya existe. Verifica manualmente que sea público en el Dashboard de Supabase.")
         
         # 6. Mostrar resumen
         print("="*60)

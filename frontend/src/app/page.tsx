@@ -12,6 +12,7 @@ interface Album {
   title: string;
   description: string;
   created_at: string;
+  preview_url?: string;   // primera imagen del álbum
 }
 
 interface FileData {
@@ -22,32 +23,38 @@ interface FileData {
 
 export default function PublicGallery() {
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
+  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [files, setFiles] = useState<FileData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [lightbox, setLightbox] = useState<FileData | null>(null);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
     fetchAlbums();
   }, []);
-
-  useEffect(() => {
-    if (selectedAlbum) {
-      fetchFiles(selectedAlbum);
-    }
-  }, [selectedAlbum]);
 
   async function fetchAlbums() {
     try {
       const data = await albumService.getPublicAlbums();
-      setAlbums(data.albums || []);
-      if (data.albums && data.albums.length > 0) {
-        setSelectedAlbum(data.albums[0].id);
-      }
+      const rawAlbums: Album[] = data.albums || [];
+
+      // Enrich each album with its first clean image for preview
+      const enriched = await Promise.all(
+        rawAlbums.map(async (alb) => {
+          try {
+            const res = await fileService.getPublicFiles(alb.id);
+            const imgs = (res.files || []).filter((f: FileData) => f.type === "image");
+            return { ...alb, preview_url: imgs[0]?.url || null };
+          } catch {
+            return alb;
+          }
+        })
+      );
+      setAlbums(enriched);
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,13 +62,23 @@ export default function PublicGallery() {
     }
   }
 
-  async function fetchFiles(albumId: string) {
+  async function openAlbum(album: Album) {
+    setSelectedAlbum(album);
+    setFiles([]);
+    setFilesLoading(true);
     try {
-      const data = await fileService.getPublicFiles(albumId);
+      const data = await fileService.getPublicFiles(album.id);
       setFiles(data.files || []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setFilesLoading(false);
     }
+  }
+
+  function closeAlbum() {
+    setSelectedAlbum(null);
+    setFiles([]);
   }
 
   const handleLogout = async () => {
@@ -70,108 +87,227 @@ export default function PublicGallery() {
     router.refresh();
   };
 
+  const filtered = albums.filter(
+    (a) =>
+      a.title.toLowerCase().includes(search.toLowerCase()) ||
+      a.description?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="bg-background text-on-background font-body-md antialiased pt-24 pb-32 min-h-screen">
+    <div className="bg-background text-on-background font-body-md antialiased min-h-screen">
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] flex items-center justify-between px-6 py-4 transition-transform duration-200">
-        <div className="flex items-center gap-4 w-full">
-          <button className="flex items-center justify-center w-10 h-10 hover:bg-zinc-100 transition-colors duration-200 rounded-full shrink-0">
-            <span className="material-symbols-outlined text-[#E60023]">potted_plant</span>
-          </button>
-          
-          <div className="flex-1 max-w-2xl mx-auto hidden md:flex items-center bg-[#F0F0F0] rounded-full h-12 px-4 shadow-sm hover:shadow-md transition-shadow">
-            <span className="material-symbols-outlined text-secondary mr-2">search</span>
-            <input className="bg-transparent border-none outline-none focus:ring-0 w-full text-on-surface font-body-md placeholder:text-secondary px-0" placeholder="Buscar álbumes" type="text"/>
+      <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_2px_20px_-5px_rgba(0,0,0,0.07)]">
+        <div className="flex items-center gap-4 px-6 py-3.5 max-w-7xl mx-auto">
+          {/* Logo */}
+          <span className="text-[#E60023] font-bold text-xl tracking-tighter shrink-0">SecureFrame</span>
+
+          {/* Search */}
+          <div className="flex-1 max-w-xl mx-auto flex items-center bg-zinc-100 rounded-full h-11 px-4 gap-2">
+            <span className="material-symbols-outlined text-secondary text-[20px]">search</span>
+            <input
+              className="bg-transparent border-none outline-none w-full text-sm text-on-surface placeholder:text-secondary"
+              placeholder="Buscar álbumes..."
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="text-secondary hover:text-on-surface cursor-pointer">
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            )}
           </div>
-          
-          <div className="flex-1 md:hidden flex justify-end">
-            <button className="flex items-center justify-center w-10 h-10 hover:bg-zinc-100 transition-colors duration-200 rounded-full shrink-0">
-              <span className="material-symbols-outlined text-zinc-900">search</span>
-            </button>
-          </div>
-          
+
+          {/* Auth buttons */}
           {user ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Link href="/dashboard">
-                <button className="bg-[#412b29] text-white px-5 py-2.5 rounded-full font-label-md text-label-md hover:bg-zinc-800 transition-colors duration-200 shadow-sm cursor-pointer">
-                  Dashboard
+                <button className="bg-zinc-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-700 transition-colors cursor-pointer">
+                  Mi Panel
                 </button>
               </Link>
-              <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 hover:bg-red-50 text-red-500 transition-colors duration-200 rounded-full shrink-0 cursor-pointer" title="Cerrar sesión">
+              <button
+                onClick={handleLogout}
+                className="w-10 h-10 rounded-full hover:bg-red-50 text-red-500 flex items-center justify-center transition-colors cursor-pointer"
+                title="Cerrar sesión"
+              >
                 <span className="material-symbols-outlined">logout</span>
               </button>
             </div>
           ) : (
-            <Link href="/login">
-              <button className="bg-[#412b29] text-white px-5 py-2.5 rounded-full font-label-md text-label-md hover:bg-zinc-800 transition-colors duration-200 shadow-sm cursor-pointer">
-                Iniciar Sesión
-              </button>
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/login">
+                <button className="bg-zinc-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-700 transition-colors cursor-pointer">
+                  Iniciar Sesión
+                </button>
+              </Link>
+              <Link href="/register">
+                <button className="border border-zinc-200 text-zinc-800 px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-50 transition-colors cursor-pointer">
+                  Registrarse
+                </button>
+              </Link>
+            </div>
           )}
         </div>
       </header>
 
-      {/* Main Content Canvas */}
-      <main className="px-container-margin mx-auto w-full max-w-[1600px]">
-        
-        {/* Album Filters */}
-        <div className="flex items-center gap-sm mb-lg overflow-x-auto pb-2">
-          {albums.length === 0 && !loading && (
-             <span className="text-secondary font-label-md">No se encontraron álbumes públicos.</span>
-          )}
-          {albums.map((album) => (
-            <button 
-              key={album.id}
-              onClick={() => setSelectedAlbum(album.id)}
-              className={`px-4 py-2 rounded-full font-label-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${selectedAlbum === album.id ? "bg-[#111111] text-white" : "bg-secondary-fixed text-on-surface hover:bg-secondary-fixed-dim"}`}
+      {/* ──────────────────── ALBUM DETAIL VIEW ──────────────────── */}
+      {selectedAlbum ? (
+        <main className="pt-20 pb-16 px-6 max-w-7xl mx-auto">
+          {/* Back + Title */}
+          <div className="flex items-center gap-4 mb-8 pt-4">
+            <button
+              onClick={closeAlbum}
+              className="flex items-center gap-2 text-secondary hover:text-on-surface transition-colors cursor-pointer"
             >
-              {album.title}
+              <span className="material-symbols-outlined">arrow_back</span>
+              <span className="text-sm font-medium">Volver a álbumes</span>
             </button>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="col-span-full py-20 flex justify-center">
-            <span className="material-symbols-outlined animate-spin text-primary">refresh</span>
           </div>
-        ) : files.length === 0 ? (
-          <div className="col-span-full py-20 text-center border-2 border-dashed border-outline-variant rounded-[32px] text-secondary">
-             <span className="material-symbols-outlined text-4xl mb-2">image</span>
-             <p>Aún no hay archivos públicos.</p>
-           </div>
-        ) : (
-          <div className="masonry-grid">
-            {files.map((file) => (
-              <article key={file.id} className="masonry-item relative group cursor-pointer">
-                <div className="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
-                  
-                  {file.type === "pdf" ? (
-                    <iframe src={`${file.url}#view=FitH&toolbar=0&navpanes=0`} className="w-full h-96 border-0" title="PDF Preview"></iframe>
-                  ) : (
-                    <img 
-                      src={file.url} 
-                      alt="Gallery file" 
-                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  )}
+          <h1 className="font-bold text-3xl text-on-background mb-1">{selectedAlbum.title}</h1>
+          {selectedAlbum.description && (
+            <p className="text-secondary mb-8">{selectedAlbum.description}</p>
+          )}
 
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm pointer-events-none">
-                    <button className="bg-white/95 text-on-surface px-6 py-3 rounded-full font-label-md text-label-md shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 pointer-events-auto cursor-pointer">
-                      Ver Detalles
-                    </button>
+          {filesLoading ? (
+            <div className="py-24 flex flex-col items-center gap-4 text-secondary">
+              <span className="material-symbols-outlined animate-spin text-4xl text-[#E60023]">refresh</span>
+              <p>Cargando contenido...</p>
+            </div>
+          ) : files.length === 0 ? (
+            <div className="py-24 flex flex-col items-center gap-4 border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
+              <span className="material-symbols-outlined text-6xl opacity-30">image_not_supported</span>
+              <p className="text-base">Este álbum aún no tiene archivos públicos.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  className="group cursor-pointer"
+                  onClick={() => setLightbox(file)}
+                >
+                  <div className="rounded-2xl overflow-hidden aspect-square relative shadow-[0_4px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.13)] transition-all duration-300 bg-surface-container">
+                    {file.type === "pdf" ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-red-50">
+                        <span className="material-symbols-outlined text-5xl text-[#E60023]" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>
+                        <span className="text-xs text-red-700 font-medium">PDF</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={file.url}
+                        alt="Contenido del álbum"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                      <span className="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                        {file.type === "pdf" ? "Ver PDF" : "Ver imagen"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-3 px-2 flex justify-between items-center">
-                  <p className="font-label-md text-label-md text-on-surface">Colección Segura</p>
-                  <button className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center hover:bg-surface-variant transition-colors cursor-pointer text-secondary">
-                    <span className="material-symbols-outlined text-[18px]">more_horiz</span>
-                  </button>
-                </div>
-              </article>
-            ))}
+              ))}
+            </div>
+          )}
+        </main>
+      ) : (
+        /* ──────────────────── ALBUMS GRID ──────────────────── */
+        <main className="pt-20 pb-16 px-6 max-w-7xl mx-auto">
+          <div className="pt-8 mb-6">
+            <h1 className="font-bold text-3xl text-on-background mb-1">Galería Pública</h1>
+            <p className="text-secondary">Explora las colecciones de la comunidad SecureFrame.</p>
           </div>
-        )}
-      </main>
+
+          {loading ? (
+            <div className="py-24 flex flex-col items-center gap-4">
+              <span className="material-symbols-outlined animate-spin text-4xl text-[#E60023]">refresh</span>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-24 flex flex-col items-center gap-4 border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
+              <span className="material-symbols-outlined text-6xl opacity-30">photo_library</span>
+              <p className="text-base">{search ? "No se encontraron álbumes con esa búsqueda." : "Aún no hay álbumes públicos disponibles."}</p>
+              {search && (
+                <button onClick={() => setSearch("")} className="text-[#E60023] text-sm font-medium cursor-pointer hover:underline">
+                  Limpiar búsqueda
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filtered.map((album) => (
+                <div
+                  key={album.id}
+                  className="group cursor-pointer"
+                  onClick={() => openAlbum(album)}
+                >
+                  <div className="rounded-2xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.07)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1 bg-surface-container-lowest">
+                    {/* Preview image */}
+                    <div className="aspect-[4/3] relative bg-surface-container overflow-hidden">
+                      {album.preview_url ? (
+                        <img
+                          src={album.preview_url}
+                          alt={album.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-secondary opacity-40">
+                          <span className="material-symbols-outlined text-5xl">photo_library</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center pb-4">
+                        <span className="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                          Ver álbum
+                        </span>
+                      </div>
+                    </div>
+                    {/* Info */}
+                    <div className="p-4">
+                      <h2 className="font-bold text-base text-on-surface truncate mb-1">{album.title}</h2>
+                      {album.description && (
+                        <p className="text-secondary text-sm line-clamp-2">{album.description}</p>
+                      )}
+                      <p className="text-xs text-secondary mt-2">
+                        {new Date(album.created_at).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
+
+      {/* ──── LIGHTBOX ──── */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors cursor-pointer"
+            onClick={() => setLightbox(null)}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+          <div onClick={(e) => e.stopPropagation()} className="max-w-4xl w-full max-h-[90vh]">
+            {lightbox.type === "pdf" ? (
+              <iframe
+                src={`${lightbox.url}#view=FitH&toolbar=1`}
+                className="w-full h-[80vh] rounded-2xl border-0 bg-white"
+                title="Vista PDF"
+              />
+            ) : (
+              <img
+                src={lightbox.url}
+                alt="Vista ampliada"
+                className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl mx-auto block"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,9 @@ interface QuarantinedFile {
   type?: string;
   preview_url?: string;
   album_id: string;
+  album_title?: string;
+  user_id?: string;
+  user_email?: string;
   status: string;
 }
 
@@ -84,7 +87,31 @@ export default function SupervisorDashboard() {
           setPendingAlbums(enriched);
         }
         if (filesData.status === "fulfilled") {
-          setFiles(filesData.value?.quarantined_files || filesData.value || []);
+          const rawFiles: QuarantinedFile[] = filesData.value?.quarantined_files || filesData.value || [];
+          // Enrich with album title and user email
+          try {
+            const usersRes = await fetch(`http://localhost:8000/api/admin/users?supervisor_id=${user.id}`);
+            const { users } = usersRes.ok ? await usersRes.json() : { users: [] };
+            // Fetch album info for each file
+            const enrichedFiles = await Promise.all(rawFiles.map(async (f) => {
+              try {
+                const albumRes = await fetch(`http://localhost:8000/api/albums/${f.album_id}?supervisor_id=${user.id}`);
+                const albumData = albumRes.ok ? await albumRes.json() : null;
+                const albumTitle = albumData?.title || albumData?.album?.title || null;
+                const ownerId = albumData?.user_id || albumData?.album?.user_id || null;
+                const ownerMatch = users.find((u: any) => u.id === ownerId);
+                return {
+                  ...f,
+                  album_title: albumTitle || f.album_id.substring(0, 12) + "…",
+                  user_id: ownerId,
+                  user_email: ownerMatch?.email || (ownerId ? ownerId.substring(0, 12) + "…" : "—")
+                };
+              } catch { return f; }
+            }));
+            setFiles(enrichedFiles);
+          } catch {
+            setFiles(rawFiles);
+          }
         }
       } catch (err: any) {
         console.error("Error loading supervisor data", err);
@@ -284,7 +311,12 @@ export default function SupervisorDashboard() {
                   <div className="p-4 flex flex-col gap-3">
                     <div>
                       <h2 className="font-headline-sm text-headline-sm text-on-surface">Archivo Sospechoso</h2>
-                      <p className="font-label-sm text-label-sm text-secondary mt-1">Álbum: <span className="font-mono">{file.album_id.substring(0, 12)}…</span></p>
+                      <p className="font-label-sm text-label-sm text-secondary mt-1">
+                        Álbum: <span className="font-medium text-on-surface">{file.album_title || file.album_id.substring(0, 12) + "…"}</span>
+                      </p>
+                      <p className="font-label-sm text-label-sm text-secondary mt-0.5">
+                        Propietario: <span className="font-mono">{file.user_email || "—"}</span>
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       <button

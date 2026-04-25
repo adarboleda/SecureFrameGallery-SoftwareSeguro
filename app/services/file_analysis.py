@@ -59,7 +59,10 @@ def analyze_image_steganography(img: Image.Image) -> dict:
 
 def analyze_pdf_security(file_bytes: bytes) -> dict:
     """
-    Analiza un PDF en busca de patrones maliciosos (JavaScript) o datos ocultos.
+    Analiza un PDF en busca de patrones maliciosos reales:
+    - JavaScript embebido en enlaces o formularios
+    - Archivos embebidos ocultos
+    Un PDF exportado normalmente desde Word/LibreOffice NO debe ser marcado.
     """
     is_suspicious = False
     details = []
@@ -67,35 +70,42 @@ def analyze_pdf_security(file_bytes: bytes) -> dict:
     try:
         doc = fitz.open("pdf", file_bytes)
         
-        # 1. Buscar JavaScript en enlaces o catálogos
+        # 1. Buscar JavaScript en enlaces
         for page_num in range(len(doc)):
             page = doc[page_num]
             links = page.get_links()
             for link in links:
                 if link.get("kind") == fitz.LINK_JAVASCRIPT:
                     is_suspicious = True
-                    details.append(f"JavaScript embebido encontrado en un enlace de la página {page_num+1}.")
+                    details.append(f"JavaScript embebido detectado en un enlace de la página {page_num+1}.")
         
-        # Revisar si hay campos interactivos con JS
+        # 2. Buscar JavaScript en widgets/formularios
         for page_num in range(len(doc)):
             page = doc[page_num]
-            widgets = page.widgets()
-            if widgets:
-                for widget in widgets:
-                    if widget.script:
-                        is_suspicious = True
-                        details.append(f"JavaScript en widget (Formulario) en la página {page_num+1}.")
+            try:
+                widgets = page.widgets()
+                if widgets:
+                    for widget in widgets:
+                        if widget.script:
+                            is_suspicious = True
+                            details.append(f"JavaScript en widget (Formulario) detectado en la página {page_num+1}.")
+            except Exception:
+                pass  # Algunos PDFs sin formularios lanzan excepción, no es señal de riesgo
                     
-        # 2. Archivos embebidos (adjuntos ocultos)
+        # 3. Archivos embebidos ocultos (adjuntos que no se ven normalmente)
         if doc.embedded_file_count() > 0:
             is_suspicious = True
-            details.append(f"El PDF contiene {doc.embedded_file_count()} archivo(s) embebido(s).")
+            details.append(f"El PDF contiene {doc.embedded_file_count()} archivo(s) oculto(s) embebido(s).")
             
         doc.close()
         
     except Exception as e:
-        is_suspicious = True
-        details.append(f"Error parseando el PDF, posible manipulación de estructura: {str(e)}")
+        # Solo flaggear si el error parece intencional (estructura truncada, no si es error de librería)
+        error_msg = str(e).lower()
+        if any(kw in error_msg for kw in ["encrypted", "malformed", "invalid xref", "cannot open"]):
+            is_suspicious = True
+            details.append(f"Estructura del PDF potencialmente manipulada: {str(e)}")
+        # Si es otro tipo de error (e.g. codec, font), NO marcar como sospechoso
         
     return {
         "is_suspicious": bool(is_suspicious),

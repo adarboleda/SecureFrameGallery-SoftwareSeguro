@@ -13,12 +13,17 @@ interface FileAnalysis {
   type: string;
   preview_url?: string;
   album_id: string;
+  user_id?: string;
+  user_email?: string;
+  album_title?: string;
   stego_entropy?: number;
   stego_detected?: boolean;
   chi_square?: number;
   pdf_javascript?: boolean;
   pdf_attachments?: boolean;
+  pdf_details?: string[];
   analysis_logs?: string[];
+  analysis_metadata?: any;
 }
 
 function QuarantineContent() {
@@ -46,15 +51,61 @@ function QuarantineContent() {
         const files = await fileService.getQuarantinedFiles(user.id);
         const file = files.find((f: any) => f.id === fileId);
         if (file) {
-          // Add some mock analysis data if not fully provided by backend yet
+          // Extract metadata from analysis_metadata field if present
+          const meta = file.analysis_metadata || {};
+          
+          // Translate analysis logs to Spanish
+          const translateLog = (log: string): string => {
+            const translations: Record<string, string> = {
+              "Anomalous frequency distribution detected.": "Distribución de frecuencias anómala detectada en los píxeles del archivo.",
+              "EXIF data stripped. Standard baseline profile confirmed.": "Datos EXIF eliminados. Perfil base estándar confirmado.",
+              "LSB anomaly detected.": "Anomalía en bits menos significativos (LSB) detectada.",
+              "Chi-square attack positive: artificial pixel distribution.": "Análisis Chi-cuadrado positivo: distribución artificial de píxeles.",
+              "DCT variance anomaly: unnaturally smooth image.": "Varianza DCT anómala: imagen artificialmente suavizada.",
+              "JavaScript embedded in link found.": "JavaScript embebido detectado en un enlace del PDF.",
+              "JavaScript in widget (Form) found.": "JavaScript en un widget de formulario del PDF.",
+              "Embedded files found.": "Archivos adjuntos ocultos encontrados en el PDF.",
+            };
+            return translations[log] || log;
+          };
+
+          // Build logs from analysis_metadata or pdf_details
+          let logs: string[] = [];
+          if (meta.pdf_details && Array.isArray(meta.pdf_details)) {
+            logs = meta.pdf_details.map(translateLog);
+          } else if (Array.isArray(meta.details)) {
+            logs = meta.details.map(translateLog);
+          } else if (file.analysis_logs) {
+            logs = file.analysis_logs.map(translateLog);
+          } else {
+            logs = ["Contenido marcado para revisión manual por el sistema de análisis."];
+          }
+
+          // Fetch user email for this file
+          let userEmail = "—";
+          let albumTitle = file.album_id?.substring(0, 12) + "…";
+          try {
+            const albumRes = await fetch(`http://localhost:8000/api/albums/${file.album_id}`);
+            if (albumRes.ok) {
+              const albumData = await albumRes.json();
+              albumTitle = albumData.title || albumTitle;
+              const usersRes = await fetch(`http://localhost:8000/api/admin/users?supervisor_id=${user.id}`);
+              if (usersRes.ok) {
+                const { users } = await usersRes.json();
+                const match = users.find((u: any) => u.id === albumData.user_id);
+                userEmail = match?.email || albumData.user_id || "—";
+              }
+            }
+          } catch {}
+
           setFileData({
             ...file,
-            stego_entropy: file.stego_entropy || 94.2,
-            stego_detected: file.stego_detected !== undefined ? file.stego_detected : true,
-            analysis_logs: file.analysis_logs || [
-              "Anomalous frequency distribution detected.",
-              "EXIF data stripped. Standard baseline profile confirmed."
-            ]
+            user_email: userEmail,
+            album_title: albumTitle,
+            stego_entropy: meta.stego_entropy || meta.lsb_ratio_ones ? Math.round(meta.lsb_ratio_ones * 100) : file.stego_entropy,
+            stego_detected: meta.lsb_anomaly || meta.chi_square_anomaly || meta.dct_anomaly || file.stego_detected,
+            pdf_javascript: meta.pdf_javascript || false,
+            analysis_logs: logs
           });
         }
       } catch (err: any) {
@@ -162,12 +213,14 @@ function QuarantineContent() {
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div>
-                <span className="block font-label-sm text-label-sm text-secondary">ID</span>
-                <span className="font-body-md text-body-md text-on-surface truncate block" title={fileData.id}>{fileData.id.substring(0, 15)}...</span>
+                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Propietario</span>
+                <span className="font-body-sm text-body-sm text-on-surface block truncate" title={fileData.user_email}>{fileData.user_email || "—"}</span>
               </div>
               <div>
-                <span className="block font-label-sm text-label-sm text-secondary">Tipo</span>
-                <span className="font-body-md text-body-md text-on-surface uppercase">{fileData.type}</span>
+                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Tipo de Archivo</span>
+                <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
+                  {fileData.type === "pdf" ? "PDF" : fileData.type === "image" ? "Imagen" : fileData.type?.toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
@@ -177,21 +230,23 @@ function QuarantineContent() {
         <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
           <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">Registros de Análisis</h3>
           <div className="space-y-4">
-            {fileData.analysis_logs?.map((log, idx) => (
+            {fileData.analysis_logs?.length ? fileData.analysis_logs.map((log, idx) => (
               <div key={idx} className="flex items-start gap-3">
                 <span className={`material-symbols-outlined ${idx === 0 ? 'text-error' : 'text-[#0079b6]'} text-lg mt-1`}>
                   {idx === 0 ? 'error' : 'info'}
                 </span>
-                <div>
-                  <p className="font-body-md text-body-md text-on-surface">{log}</p>
-                </div>
+                <p className="font-body-md text-body-md text-on-surface">{log}</p>
               </div>
-            ))}
+            )) : (
+              <p className="text-secondary font-body-sm text-body-sm">No se registraron eventos de análisis adicionales.</p>
+            )}
           </div>
           <div className="mt-sm flex flex-wrap gap-2">
-            <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#{fileData.type === 'pdf' ? 'script-malicioso' : 'estego'}</span>
+            <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">
+              #{fileData.type === 'pdf' ? 'pdf-sospechoso' : 'esteganografía'}
+            </span>
             <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#revision-manual</span>
-            <span className="px-3 py-1 bg-surface-dim rounded-full font-label-sm text-label-sm text-primary">#alta-confianza</span>
+            <span className="px-3 py-1 bg-surface-dim rounded-full font-label-sm text-label-sm text-primary">#alta-prioridad</span>
           </div>
         </div>
 
