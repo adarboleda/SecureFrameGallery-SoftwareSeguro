@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Public Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "background": "#fff8f7",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-secondary-container": "#656464",
+                        "on-primary-fixed-variant": "#930012",
+                        "surface-dim": "#f5d2cf",
+                        "surface-container-highest": "#fedad7",
+                        "surface-variant": "#fedad7",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface-container-low": "#fff0ef",
+                        "primary-fixed-dim": "#ffb3ad",
+                        "primary-container": "#e60023",
+                        "inverse-primary": "#ffb3ad",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#412b29",
+                        "on-surface-variant": "#5e3f3c",
+                        "on-tertiary-fixed-variant": "#004b73",
+                        "on-surface": "#2a1615",
+                        "on-tertiary-container": "#f7f9ff",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-bright": "#fff8f7",
+                        "inverse-on-surface": "#ffedeb",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#e5e2e1",
+                        "secondary": "#5f5e5e",
+                        "surface-container": "#ffe9e7",
+                        "primary-fixed": "#ffdad7",
+                        "on-background": "#2a1615",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#0079b6",
+                        "on-primary-fixed": "#410004",
+                        "tertiary": "#005f90",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#ffe2df",
+                        "outline": "#936e6b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface": "#fff8f7",
+                        "primary": "#b7001a",
+                        "on-tertiary-fixed": "#001e31",
+                        "surface-tint": "#c0001b",
+                        "outline-variant": "#e8bcb8",
+                        "tertiary-fixed-dim": "#92ccff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#fff7f6",
+                        "tertiary-fixed": "#cce5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "grid-gutter": "16px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "container-margin": "24px",
+                        "sm": "8px",
+                        "unit": "4px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Masonry utility since standard columns can sometimes misbehave with margins */
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 16px;
+        }
+        @media (min-width: 768px) {
+            .masonry-grid { column-count: 3; }
+        }
+        @media (min-width: 1024px) {
+            .masonry-grid { column-count: 4; }
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased pt-24 pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] flex items-center justify-between px-6 py-4 transition-transform duration-200">
+<div class="flex items-center gap-4 w-full">
+<button class="flex items-center justify-center w-10 h-10 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 rounded-full shrink-0">
+<span class="material-symbols-outlined text-[#E60023]">potted_plant</span>
+</button>
+<!-- Search Pill -->
+<div class="flex-1 max-w-2xl mx-auto hidden md:flex items-center bg-[#F0F0F0] rounded-full h-12 px-4 shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-secondary mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-on-surface font-body-md placeholder:text-secondary px-0" placeholder="Search" type="text"/>
+</div>
+<!-- Mobile Search Icon -->
+<div class="flex-1 md:hidden flex justify-end">
+<button class="flex items-center justify-center w-10 h-10 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 rounded-full shrink-0">
+<span class="material-symbols-outlined text-zinc-900">search</span>
+</button>
+</div>
+<button class="w-10 h-10 rounded-full bg-secondary-fixed overflow-hidden shrink-0 border-2 border-transparent hover:border-[#E60023] transition-colors">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="close up portrait of a young woman with natural makeup and subtle smile, soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn8E651rBwEACFd1WZCQklNaifb0bc6WTy7XGs-zJz4qKVolR3diqHGvUrv1qjEYMYMNaP9npEZc1842p3M6mOa2cX42FWsfrzsh-rCe-z095amkaf035hovYDiNqX3ahfCbj4AYe-L32P8ZA9FPmdc1WQ9BKbsjq3Sic2aU60nEx4jXvQvFkpWydrVgRdfyF78Ip2J_wSxWpyIsSZG7GQN8l1VLngDLbw4toHbGCTlKc4v5YjmHWbcSIsiCHv-wuZ34J50p3dCPM"/>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas: Masonry Grid -->
+<main class="px-container-margin mx-auto w-full max-w-[1600px]">
+<!-- Filter/Chip Row -->
+<div class="flex items-center gap-sm mb-lg overflow-x-auto pb-2 scrollbar-hide">
+<button class="px-4 py-2 rounded-full bg-[#111111] text-white font-label-md whitespace-nowrap shrink-0">All Ideas</button>
+<button class="px-4 py-2 rounded-full bg-secondary-fixed text-on-surface font-label-md whitespace-nowrap shrink-0 hover:bg-secondary-fixed-dim transition-colors">Minimalist Decor</button>
+<button class="px-4 py-2 rounded-full bg-secondary-fixed text-on-surface font-label-md whitespace-nowrap shrink-0 hover:bg-secondary-fixed-dim transition-colors">Clean Architecture</button>
+<button class="px-4 py-2 rounded-full bg-secondary-fixed text-on-surface font-label-md whitespace-nowrap shrink-0 hover:bg-secondary-fixed-dim transition-colors">Typography</button>
+<button class="px-4 py-2 rounded-full bg-secondary-fixed text-on-surface font-label-md whitespace-nowrap shrink-0 hover:bg-secondary-fixed-dim transition-colors">Editorial Layouts</button>
+</div>
+<div class="masonry-grid">
+<!-- Card 1 (Vertical) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Approved Architecture" class="w-full h-auto aspect-[3/4] object-cover" data-alt="modern minimalist home interior with bright white walls, large windows letting in sunlight, and a single statement plant in the corner" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSG53Uf589xnMDpAK5g4UZN0XnttFh2bD2pGm50mzB2IQ5zBwTcvIWc9DnjTloTbfuzzZ2D7d1vLUJhI9z0rb3Dpr4ubMlCsq5rEnu8gLizIHvHUjdFtzg47fCxnnjWkd6n0tcUlwHhozvPCD_FARzl3khQaDswRsBd7m7BDq6juIz0XxdNlRIPjmM0f6rNXXtLluVzxdC-LhI1Dn8dyyMdXTYYkIUFH4KC4E3sz3HqSI-Z_NXWwotfONeLQ-w0DpCST-A3WUDidY"/>
+<!-- Hover Overlay -->
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+<div class="flex justify-end gap-2">
+<button class="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[18px] text-zinc-900">ios_share</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-[18px] text-zinc-900">more_horiz</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-2 px-1 flex items-center justify-between">
+<h3 class="font-label-md text-on-surface truncate pr-2">Modern Living Spaces</h3>
+<button class="w-6 h-6 rounded-full hover:bg-secondary-fixed flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[16px] text-secondary">more_horiz</span>
+</button>
+</div>
+</article>
+<!-- Card 2 (Square) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Clean Minimalist" class="w-full h-auto aspect-square object-cover" data-alt="top down view of a minimalist desk setup with a sleek silver laptop, a white ceramic coffee cup, and a small succulent plant on a light wood surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmZqRWGQZkWPlqWEH1-u284aCUq6BcdGEoy8xdMPYdIQQRBGEb_VlDI6Hab_2jzF_VYG_lfAy96Hvib769D_8tXlhf9Z3bzuTqmcwNd3_nBADhYZLC0mvMFUQNrQKwMYoMhUgarCX4XPejZadiZM93-scyTSII3FhSMtZn9CmCy54v2PSJc4UdqOF0b-k6ydY6pDkTvv4rf5uChb7nZuy7xFwpykP6aWZk6pz4BGY5d6ZKRNz6gumJBsKJIXTH660bbJOhl6jW99Y"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+<div class="mt-2 px-1 flex items-center justify-between">
+<h3 class="font-label-md text-on-surface truncate pr-2">Workspace Inspiration</h3>
+</div>
+</article>
+<!-- Card 3 (Tall) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Approved Layout" class="w-full h-auto aspect-[2/3] object-cover" data-alt="elegant abstract geometric shapes in soft pastel colors like peach and mint green, creating a smooth and calming visual composition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGBDg_mmP9fDQ-E1-DTAGBFUoF_pMP8-IaixDzg9nsRb5O0W4hqytOTg139Z_RAJbqqZsUtJxsHIsfn_3cM2SB7RYmETUb_E-NWyXGLNyyBSMtXE-wFJiWbpp1pUkMVGjY4nCj9nkYxj-XrVwWM1PIvAh-M-QgaI8CvgHzlFTJRlGmcW3Uh-CPt_fciiCEabvPrIvCuBZCxWDrbosXON7SELswNVuVLmx-kvZSztjwLhmqdUnWikEcop0AXw1FfSOObS3rwsHY8aw"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+<div class="mt-2 px-1 flex items-center justify-between">
+<h3 class="font-label-md text-on-surface truncate pr-2">Abstract Forms</h3>
+</div>
+</article>
+<!-- Card 4 (Landscape) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Clean Nature" class="w-full h-auto aspect-[4/3] object-cover" data-alt="wide shot of a serene mountain lake at dawn, mist rolling over the still water reflecting the soft pink and blue hues of the sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbDbUwZR5PQgd_Nm0tsmge7HhFSK-NN4RsnQvBIzVzSPQdphJ3hWbZGejKQJfrJdIanjElrEiiIbfTAX-9kbU19dvh9GJrj4LnuQIqy-5C31C5fmyBz5gUyIfEYBMl3VbBqLSKzG4ea5_67o1m1RTLd5uzhw2ZE9xuTxqVYJJKzTPTWr4kdzS9rBwfoW7oY7-Fup8JmkqtWk6mC6Q2S743ZJy23gb3Iz3_ObRDe2y2ShZghH2f2_OV6C0waspqHn8itP9wJqpjlpQ"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+<div class="mt-2 px-1 flex items-center justify-between">
+<h3 class="font-label-md text-on-surface truncate pr-2">Morning Serenity</h3>
+</div>
+</article>
+<!-- Card 5 (Vertical) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Approved Fashion" class="w-full h-auto aspect-[3/5] object-cover" data-alt="fashion editorial style photo of a person wearing an oversized beige trench coat standing against a textured concrete wall, soft diffused lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnEOXg4d74uwXU63xZpfEbEbvkotmpg-klKCH6v-8I4yxRugymby3HXvEutBIMR-BQARzd4wFFDnf4aK2G4VbsaurenbYEgvqPp7sj4E-xoqnm0TgXmidSpgFsqT0OReUO7bMZ5jmbltmaBvMGrW9oKeZKLQuvjbTQZdn0ld0ol3yfUHlYkPgIzzh1Ah21P2VC0dSeVb5OqH3FZweBz81zo5sekEynb5tECNvrk1uJDAKrOGIBsF_46K2lbQKyYvk_DwlYLbd82eo"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 6 (Square) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Clean Typography" class="w-full h-auto aspect-square object-cover" data-alt="close up of bold black serif typography printed on high quality thick textured off-white paper, sharp focus on the ink impression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6vYw8cMlZtOwl_B662iFJ236-I8iQC2DYT3h0wNydOYVxvfonKEuXLKs5nEftVHrE_4US-psh9_Suy4m_2hArGpjESlHgyDCqp93BcD4wqvN9JmyZFzkbvpxfQ_-KOsmKsGtp4_81nJkrgEgT9nnQUBAj2eI5z2n3wt7X8YBHBYkkcvlFZpZoVOjm27m-O_eoD-jClh1sQi8qi8VAANM8oQabKpLfMdFXzUSnKabZdzssE9_gvuw47T6ndGmMbc25s_-HZqBTfRo"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+<div class="mt-2 px-1 flex items-center justify-between">
+<h3 class="font-label-md text-on-surface truncate pr-2">Print Details</h3>
+</div>
+</article>
+<!-- Card 7 (Landscape) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Clean Interior" class="w-full h-auto aspect-[16/9] object-cover" data-alt="sleek modern kitchen interior featuring matte black cabinetry, a white marble island, and subtle warm LED under-cabinet lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiRGLACTrhdxfuVxjyrHmGyWcfj1Xyh5RuzX0dPmzLCbcOsINz-lw3mV9UiaDNXa2-LV82pewxGqEq7ZI3jsf9cyWFycGxUT7eEJ53dce3huxG2D5cV8IAtBPI0xNNkRsEJfgjI9pbsk1L9NQXHbDlQyVzTKwq6tclUiVlnm-u1mUbyOkfuVHbSRqqHIwe9IjIHCc5Rv3QchRdDb3z3-uSNF6PYsbhqQvhZxlVtOSiwR0xFuSCGM6D-dikUYJZmTIh23s0LA4CFME"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 8 (Tall) -->
+<article class="masonry-item relative group cursor-pointer">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+<img alt="Approved Still Life" class="w-full h-auto aspect-[3/4] object-cover" data-alt="minimalist still life composition featuring dried neutral toned flowers in a simple ceramic vase against a soft grey backdrop, natural window light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrgElgD9yC2CMCQv4fQ7xtkmzf3XyS26XaWfF7gB7oD203CYKdXNhL1G2L627JM80mPJHJUHUxlEHaOyNgBpaSNu1VoyqJgnhX2wsaE_ymEQwPBE73ZXadPb1H60vWHCEbfuy5OG0k_w7jJBxZIM3RgnddkzD4x5z9uiwhtNuYZjSmrBKM2JnAJxhU6HYxn5U3H0vWQjXsKEN8nR06Cym5vtWa6XpTPvyKvSqUcNZzVRgvUyVXVg1ToiYZb2GWuR2E-mT_vAlY4ro"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+<div class="flex justify-end">
+<button class="bg-[#E60023] text-white font-label-md px-4 py-3 rounded-full hover:bg-[#b7001a] transition-colors">Save</button>
+</div>
+</div>
+</div>
+<div class="mt-2 px-1 flex items-center justify-between">
+<h3 class="font-label-md text-on-surface truncate pr-2">Dried Florals</h3>
+</div>
+</article>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only based on Responsive Pivot) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 md:hidden">
+<div class="flex justify-around items-center max-w-md mx-auto h-16 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+<!-- Active State: Home -->
+<button class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 group">
+<span class="material-symbols-outlined text-zinc-900 dark:text-white scale-110 group-active:scale-75 transition-all duration-300 ease-out" style="font-variation-settings: 'FILL' 1;">home</span>
+</button>
+<!-- Inactive States -->
+<button class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 group">
+<span class="material-symbols-outlined text-zinc-400 dark:text-zinc-600 group-active:scale-75 transition-all duration-300 ease-out">search</span>
+</button>
+<button class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 group">
+<span class="material-symbols-outlined text-zinc-400 dark:text-zinc-600 group-active:scale-75 transition-all duration-300 ease-out">add</span>
+</button>
+<button class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 group">
+<span class="material-symbols-outlined text-zinc-400 dark:text-zinc-600 group-active:scale-75 transition-all duration-300 ease-out">notifications</span>
+</button>
+<button class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 group">
+<span class="material-symbols-outlined text-zinc-400 dark:text-zinc-600 group-active:scale-75 transition-all duration-300 ease-out">person</span>
+</button>
+</div>
+</nav>
+</body></html>

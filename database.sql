@@ -1,11 +1,26 @@
 -- ==========================================
+-- 0. LIMPIEZA PREVIA (RESET TOTAL)
+-- Borra todo si ya existe para evitar errores
+-- ==========================================
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+
+DROP TABLE IF EXISTS public.images CASCADE;
+DROP TABLE IF EXISTS public.albums CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+DROP TYPE IF EXISTS user_role CASCADE;
+DROP TYPE IF EXISTS album_status CASCADE;
+DROP TYPE IF EXISTS album_privacy CASCADE;
+DROP TYPE IF EXISTS image_status CASCADE;
+-- ==========================================
 -- 1. TIPOS DE DATOS PERSONALIZADOS (ENUMS)
 -- Previenen inyección de estados inválidos
 -- ==========================================
 CREATE TYPE user_role AS ENUM ('user', 'supervisor');
 CREATE TYPE album_status AS ENUM ('pending', 'approved', 'rejected');
 CREATE TYPE album_privacy AS ENUM ('public', 'private');
-CREATE TYPE image_status AS ENUM ('processing', 'clean', 'quarantined', 'rejected');
+CREATE TYPE file_status AS ENUM ('processing', 'clean', 'quarantined', 'rejected');
 
 -- ==========================================
 -- 2. TABLAS DEL SISTEMA
@@ -32,15 +47,16 @@ CREATE TABLE public.albums (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabla Images: El núcleo del proyecto y la cuarentena
--- [Requisito RF03 y RF04: Detección de Esteganografía y Revisión Manual]
-CREATE TABLE public.images (
+-- Tabla Files: El núcleo del proyecto y la cuarentena (soporta imágenes y PDFs)
+-- [Requisito RF03 y RF04: Detección y Revisión Manual]
+CREATE TABLE public.files (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     album_id UUID REFERENCES public.albums(id) ON DELETE CASCADE NOT NULL,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     storage_path TEXT NOT NULL, -- La ruta física en el Bucket de Supabase Storage
-    status image_status DEFAULT 'processing' NOT NULL, -- Pasa a 'clean' o 'quarantined' tras el análisis Python
-    analysis_metadata JSONB, -- Almacena los resultados del LSB/Histograma para que el Supervisor sepa "por qué fue marcada"
+    file_type TEXT DEFAULT 'image' NOT NULL, -- 'image' o 'pdf'
+    status file_status DEFAULT 'processing' NOT NULL, -- Pasa a 'clean' o 'quarantined' tras el análisis Python
+    analysis_metadata JSONB, -- Almacena los resultados del análisis (LSB/Chi-Square/PDF JS)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -68,7 +84,7 @@ CREATE TRIGGER on_auth_user_created
 -- ==========================================
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.albums ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.files ENABLE ROW LEVEL SECURITY;
 
 -- Otorgar permisos a las tablas existentes
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;

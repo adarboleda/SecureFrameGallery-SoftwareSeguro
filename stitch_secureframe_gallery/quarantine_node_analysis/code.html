@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quarantine Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "background": "#fff8f7",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-container": "#656464",
+                    "on-primary-fixed-variant": "#930012",
+                    "surface-dim": "#f5d2cf",
+                    "surface-container-highest": "#fedad7",
+                    "surface-variant": "#fedad7",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "surface-container-low": "#fff0ef",
+                    "primary-fixed-dim": "#ffb3ad",
+                    "primary-container": "#e60023",
+                    "inverse-primary": "#ffb3ad",
+                    "error-container": "#ffdad6",
+                    "inverse-surface": "#412b29",
+                    "on-surface-variant": "#5e3f3c",
+                    "on-tertiary-fixed-variant": "#004b73",
+                    "on-surface": "#2a1615",
+                    "on-tertiary-container": "#f7f9ff",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-bright": "#fff8f7",
+                    "inverse-on-surface": "#ffedeb",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#e5e2e1",
+                    "secondary": "#5f5e5e",
+                    "surface-container": "#ffe9e7",
+                    "primary-fixed": "#ffdad7",
+                    "on-background": "#2a1615",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#0079b6",
+                    "on-primary-fixed": "#410004",
+                    "tertiary": "#005f90",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#ffe2df",
+                    "outline": "#936e6b",
+                    "on-secondary-fixed-variant": "#474646",
+                    "surface": "#fff8f7",
+                    "primary": "#b7001a",
+                    "on-tertiary-fixed": "#001e31",
+                    "surface-tint": "#c0001b",
+                    "outline-variant": "#e8bcb8",
+                    "tertiary-fixed-dim": "#92ccff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#fff7f6",
+                    "tertiary-fixed": "#cce5ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "grid-gutter": "16px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "container-margin": "24px",
+                    "sm": "8px",
+                    "unit": "4px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "label-sm": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "headline-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "label-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "headline-sm": [
+                            "Plus Jakarta Sans"
+                    ]
+            },
+            "fontSize": {
+                    "display-lg": [
+                            "36px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-sm": [
+                            "11px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-md": [
+                            "12px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+        },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md text-body-md antialiased pb-24 pt-20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border-b-0 hidden md:flex">
+<div class="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#E60023] text-2xl" data-icon="potted_plant">potted_plant</span>
+<h1 class="text-[#E60023] font-bold text-2xl tracking-tighter font-['Plus_Jakarta_SANS'] antialiased">Search</h1>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md" href="#">Home</a>
+<a class="text-zinc-900 bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md" href="#">Quarantine</a>
+<a class="text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md" href="#">Settings</a>
+</nav>
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="close up portrait of a young woman with natural makeup in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIe1zht48RQWkZdxcDOF3ODRv3-KGXFK_sxn9n9u5wK-fQMI-WM4igYljk29L5423V8bRBn2JkqvjPn2XsPc7t5kRWkTMbIFi4mWyK1yCzOeC0752sb8FBQhmUCXF3ngv4i2xQaQjyQtygajKqmBgxgVx8TVXH28aVFrpnO28S5W425Ar7FGne7PFUhcUn-cniwwvgHx4XHx0ImhI4DPEViuKplx2x2xWNUOWfI5XuqYSQg6e0PthaJJ9guUU8PIR0AXSZ49kjLHk"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="max-w-7xl mx-auto px-container-margin py-lg grid grid-cols-1 md:grid-cols-12 gap-lg">
+<!-- Header Section -->
+<div class="col-span-1 md:col-span-12 flex flex-col md:flex-row justify-between items-start md:items-end mb-md gap-md">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-background mb-unit">Analysis Report</h2>
+<p class="font-body-lg text-body-lg text-secondary">Flagged content requires manual review.</p>
+</div>
+<div class="flex items-center gap-sm bg-[#F0F0F0] px-4 py-2 rounded-full">
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="warning">warning</span>
+<span class="font-label-md text-label-md text-on-surface">High Priority</span>
+</div>
+</div>
+<!-- Image Container (Left Column) -->
+<div class="col-span-1 md:col-span-7 flex flex-col gap-md">
+<div class="relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] group">
+<img alt="Flagged Image" class="w-full h-auto object-cover max-h-[618px]" data-alt="abstract digital art with flowing lines and glowing neon colors in dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbRIiEDnfIq20LavN2JDeMpppV_GsXFvd6hpTG4a-A6d81Ut1LzNdgVxQ9b4k_K5WUc2dpncaSmZhNaOQVCryrMk1sWFoMBD269vmbQY9s5LZymtXW8kmMckJQYG87MA25knP4cIdrSBopblacbqQ-GLFl66i27MTaNG_Gdb55MERaCroXZgFxEp4iOzZxdlpx83M-5wmz32U4yNY8bxX3yxlRS_C9E0U_c7DannSIoJNRj8it00scmx-eAOisoZUSY_hIQ1QZqdk"/>
+<!-- Overlay Actions -->
+<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-white transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl" data-icon="zoom_in">zoom_in</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-white transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl" data-icon="download">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Analysis Data (Right Column) -->
+<div class="col-span-1 md:col-span-5 flex flex-col gap-lg">
+<!-- Key Metrics Bento -->
+<div class="grid grid-cols-2 gap-sm">
+<!-- Metric 1 -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-sm hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.06)] transition-shadow">
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-sm" data-icon="analytics">analytics</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Entropy</span>
+</div>
+<div class="font-headline-md text-headline-md text-error">94.2%</div>
+<div class="w-full bg-[#F0F0F0] rounded-full h-1 mt-auto">
+<div class="bg-error h-1 rounded-full" style="width: 94%"></div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-sm hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.06)] transition-shadow">
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-sm" data-icon="flag">flag</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Detection</span>
+</div>
+<div class="font-headline-sm text-headline-sm text-on-surface leading-tight">LSB Steganography</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-sm col-span-2">
+<div class="flex items-center gap-2 text-secondary mb-unit">
+<span class="material-symbols-outlined text-sm" data-icon="fingerprint">fingerprint</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">File Signatures</span>
+</div>
+<div class="grid grid-cols-2 gap-x-4 gap-y-2">
+<div>
+<span class="block font-label-sm text-label-sm text-secondary">MD5</span>
+<span class="font-body-md text-body-md text-on-surface truncate block" title="e4d909c290d0fb1ca068ffaddf22cbd0">e4d909c...2cbd0</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-secondary">MIME</span>
+<span class="font-body-md text-body-md text-on-surface">image/jpeg</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Details Section -->
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
+<h3 class="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">Analysis Logs</h3>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-error text-lg mt-1" data-icon="error">error</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Anomalous frequency distribution detected in blue channel.</p>
+<span class="font-label-sm text-label-sm text-secondary">10:42 AM</span>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#0079b6] text-lg mt-1" data-icon="info">info</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">EXIF data stripped. Standard baseline profile confirmed.</p>
+<span class="font-label-sm text-label-sm text-secondary">10:41 AM</span>
+</div>
+</div>
+</div>
+<div class="mt-sm flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#stego</span>
+<span class="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#manual-review</span>
+<span class="px-3 py-1 bg-surface-dim rounded-full font-label-sm text-label-sm text-primary">#high-confidence</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-sm mt-auto">
+<button class="w-full bg-primary-container text-on-primary py-4 rounded-full font-label-md text-label-md hover:bg-surface-tint transition-colors shadow-[0_4px_14px_0_rgba(230,0,35,0.2)] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="block">block</span>
+                    Reject Image
+                </button>
+<button class="w-full bg-[#F0F0F0] text-on-surface py-4 rounded-full font-label-md text-label-md hover:bg-[#E5E5E5] transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
+                    Approve (False Positive)
+                </button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 md:hidden">
+<div class="bg-white/95 backdrop-blur-lg flex justify-around items-center max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.1)] border border-zinc-100">
+<button class="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="text-zinc-900 scale-110 p-3 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="search" data-weight="fill">search</span>
+</button>
+<button class="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<button class="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</nav>
+</body></html>

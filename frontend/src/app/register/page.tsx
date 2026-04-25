@@ -5,43 +5,60 @@ import { useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
-export default function Login() {
+export default function Register() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: username
+          }
+        }
       });
 
       if (error) {
         throw error;
       }
 
-      window.location.href = "/dashboard";
+      window.location.href = "/login?registered=true";
     } catch (err: any) {
-      setError(err.message || "Error al iniciar sesión");
+      setError(err.message || "Error al registrar la cuenta");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-background min-h-screen flex items-center justify-center p-container-margin antialiased">
-      <main className="w-full max-w-[480px] bg-surface-container-lowest rounded-lg p-xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] flex flex-col items-center">
-        {/* Brand Icon */}
-        <div className="w-16 h-16 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center mb-lg">
-          <span className="material-symbols-outlined text-display-lg" style={{fontVariationSettings: "'FILL' 1"}}>favorite</span>
+    <div className="bg-background min-h-screen flex items-center justify-center p-6 antialiased">
+      {/* Main Registration Card */}
+      <main className="bg-surface-container-lowest w-full max-w-[480px] rounded-xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] p-8 md:p-12 flex flex-col items-center">
+        {/* Brand / Icon */}
+        <div className="w-16 h-16 bg-primary-container rounded-full flex items-center justify-center mb-6 shadow-[0_4px_20px_-4px_rgba(230,0,35,0.4)]">
+          <span className="material-symbols-outlined text-on-primary-container text-4xl" style={{fontVariationSettings: "'FILL' 1"}}>
+            temp_preferences_custom
+          </span>
         </div>
         
+        {/* Headlines */}
         <h1 className="font-display-lg text-display-lg text-on-background text-center tracking-tight mb-2">
           Bienvenido
         </h1>
@@ -50,19 +67,30 @@ export default function Login() {
         </p>
         
         {/* Form Elements */}
-        <form className="w-full flex flex-col gap-md" onSubmit={handleLogin}>
+        <form className="w-full flex flex-col gap-md" onSubmit={handleRegister}>
+          <div className="relative">
+            <input 
+              className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70" 
+              id="username" 
+              placeholder="Nombre de usuario" 
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
           <div className="relative">
             <input 
               className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70" 
               id="email" 
               placeholder="Correo electrónico" 
-              type="email" 
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <div className="relative w-full">
+          <div className="relative">
             <input 
               className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70" 
               id="password" 
@@ -71,6 +99,17 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div className="relative">
+            <input 
+              className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70" 
+              id="confirm_password" 
+              placeholder="Confirmar Contraseña" 
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
           
@@ -82,43 +121,19 @@ export default function Login() {
             type="submit"
             disabled={loading}
           >
-            {loading ? "Iniciando..." : "Iniciar sesión"}
+            {loading ? "Creando..." : "Crear Cuenta"}
           </button>
         </form>
-        
-        <div className="mt-4">
-          <a className="font-label-md text-label-md text-on-surface hover:underline cursor-pointer">¿Olvidaste tu contraseña?</a>
-        </div>
         
         {/* Terms & Footer */}
         <p className="font-label-sm text-label-sm text-on-surface-variant text-center mt-lg max-w-[280px]">
           Al continuar, aceptas nuestros <a className="font-bold hover:text-on-background underline decoration-2 underline-offset-2 cursor-pointer">Términos de Servicio</a> y reconoces haber leído nuestra <a className="font-bold hover:text-on-background underline decoration-2 underline-offset-2 cursor-pointer">Política de Privacidad</a>.
         </p>
         <div className="mt-xl">
-          <Link href="/register" className="font-label-md text-label-md text-on-background hover:text-primary-container transition-colors font-bold cursor-pointer">
-            ¿Aún no estás en SecureFrame? Regístrate
+          <Link href="/login" className="font-label-md text-label-md text-on-background hover:text-primary-container transition-colors font-bold cursor-pointer">
+            ¿Ya eres miembro? Inicia sesión
           </Link>
         </div>
-        
-        {/* Divider */}
-        <div className="flex items-center w-full my-lg">
-          <div className="flex-grow border-t border-outline-variant"></div>
-          <span className="px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">O</span>
-          <div className="flex-grow border-t border-outline-variant"></div>
-        </div>
-        
-        {/* Social Login */}
-        <button className="w-full bg-secondary-fixed text-on-secondary-fixed rounded-full py-[16px] font-label-md text-label-md hover:bg-secondary-container active:scale-[0.98] transition-all flex items-center justify-center gap-sm cursor-pointer" type="button">
-          Continuar con Google
-        </button>
-        
-        {/* Footer / Sign Up Link */}
-        <p className="mt-xl font-body-md text-body-md text-on-surface-variant text-center">
-          ¿Aún no estás dentro? 
-          <Link href="/register" className="font-label-md text-label-md text-on-surface hover:text-primary-container underline decoration-2 underline-offset-4 transition-colors ml-1">
-            Regístrate
-          </Link>
-        </p>
       </main>
     </div>
   );

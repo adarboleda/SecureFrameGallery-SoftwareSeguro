@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Album Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "background": "#fff8f7",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-secondary-container": "#656464",
+                        "on-primary-fixed-variant": "#930012",
+                        "surface-dim": "#f5d2cf",
+                        "surface-container-highest": "#fedad7",
+                        "surface-variant": "#fedad7",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface-container-low": "#fff0ef",
+                        "primary-fixed-dim": "#ffb3ad",
+                        "primary-container": "#e60023",
+                        "inverse-primary": "#ffb3ad",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#412b29",
+                        "on-surface-variant": "#5e3f3c",
+                        "on-tertiary-fixed-variant": "#004b73",
+                        "on-surface": "#2a1615",
+                        "on-tertiary-container": "#f7f9ff",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-bright": "#fff8f7",
+                        "inverse-on-surface": "#ffedeb",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#e5e2e1",
+                        "secondary": "#5f5e5e",
+                        "surface-container": "#ffe9e7",
+                        "primary-fixed": "#ffdad7",
+                        "on-background": "#2a1615",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#0079b6",
+                        "on-primary-fixed": "#410004",
+                        "tertiary": "#005f90",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#ffe2df",
+                        "outline": "#936e6b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface": "#fff8f7",
+                        "primary": "#b7001a",
+                        "on-tertiary-fixed": "#001e31",
+                        "surface-tint": "#c0001b",
+                        "outline-variant": "#e8bcb8",
+                        "tertiary-fixed-dim": "#92ccff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#fff7f6",
+                        "tertiary-fixed": "#cce5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "grid-gutter": "16px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "container-margin": "24px",
+                        "sm": "8px",
+                        "unit": "4px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #ffffff; /* White background as requested */
+            color: #2a1615;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-top: 80px; /* Space for TopAppBar */
+            padding-bottom: 80px; /* Space for BottomNavBar */
+        }
+        
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 16px;
+        }
+        @media (min-width: 768px) {
+            .masonry-grid {
+                column-count: 3;
+            }
+        }
+        @media (min-width: 1024px) {
+            .masonry-grid {
+                column-count: 4;
+            }
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+
+        /* Tonal background for secondary containers as per style guidance */
+        .bg-tonal {
+            background-color: #F0F0F0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased selection:bg-primary selection:text-white">
+<!-- TopAppBar (From JSON) -->
+<header class="fixed top-0 w-full z-50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] no-border">
+<div class="flex items-center justify-between px-6 py-4 w-full">
+<button class="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 active:scale-95 transition-transform duration-200 rounded-full p-2 flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+</button>
+<h1 class="text-[#E60023] font-bold text-2xl tracking-tighter font-display-lg text-display-lg">Search</h1>
+<button class="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 active:scale-95 transition-transform duration-200 rounded-full w-10 h-10 overflow-hidden flex items-center justify-center bg-tonal">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a smiling user in professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSMk2cfk2syBQ8AG8o8fHGnDxHkjh_qoKJ4vAK9YwgYqtJWXFU2PBMSoqT2AvmGEF8aaTKizEP8XqkESI3PiS7uR0ntTzYZgnoPSmQmQ04E1IBtbwLqAcgAT02T3SbBD3K4WLMhONwmVX2A7U447X-ztee9qeP2gm-jSiN3c3Gex5PaRBDvKemyJ8SghBV9JBlJ19msX8xCgARd_Gt_7JHPDtPDXFAVhRI_CKQfC57JXtudH2wNyEeI3iEqinzHLP_SFpJdWEIQmA"/>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="px-6 mx-auto max-w-7xl pt-4">
+<!-- Album Header & Actions -->
+<section class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-background mb-2">Summer Vacation 2023</h2>
+<p class="font-body-lg text-body-lg text-secondary">A collection of memories from the coastal trip.</p>
+<div class="flex gap-2 mt-4">
+<span class="bg-tonal text-on-surface px-4 py-1 rounded-full font-label-sm text-label-sm">Travel</span>
+<span class="bg-tonal text-on-surface px-4 py-1 rounded-full font-label-sm text-label-sm">Nature</span>
+</div>
+</div>
+<!-- Upload Button (Prominent Red as requested) -->
+<button class="bg-primary-container text-white px-8 py-4 rounded-full font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(230,0,35,0.2)] hover:shadow-[0_6px_16px_rgba(230,0,35,0.3)] transition-all duration-200 hover:-translate-y-1 w-full md:w-auto">
+<span class="material-symbols-outlined">upload</span>
+                Upload Image
+            </button>
+</section>
+<!-- Masonry Grid -->
+<section class="masonry-grid">
+<!-- Item 1 -->
+<div class="masonry-item group cursor-pointer">
+<div class="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
+<img alt="Beach sunset" class="w-full h-auto object-cover" data-alt="Serene beach at sunset with vibrant orange and pink sky reflecting on calm water" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3XHGUoSGP9_uCKkQDtXRi82UD7GqaNyB9AooJRE_HFaTd2kYhJAnJmg9iKV8zKpcr41jiL3mUBBWRiP2BLojS3V8YrCUqqBpgebcEq9N5oIvKfTmtbTojSpLsq3RoBD3vxwOxX0SuKlq3nKMXPf67pTZmndSi5X20MJnjBNZA9yBOWz7rlDgVLNuqgD-5Tnxlpawt1Mvl6qbL48S2OaiBEZ-tgH2yQtgmgs7nNVey-CwJlLaEmMBQcnw3nMpIPMTWqGNm039nDVA"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm">View</button>
+</div>
+</div>
+<div class="mt-2 px-2">
+<p class="font-label-md text-label-md text-on-surface">Golden Hour</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="masonry-item group cursor-pointer">
+<div class="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
+<img alt="Coastal cliffs" class="w-full h-auto object-cover" data-alt="Dramatic coastal cliffs with lush green grass overlooking deep blue ocean waves crashing below" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTFVyoKyjq-eMvfq1Md61OKmemBRIESiHsVzodEmCMCoGp3W1CVUJkMW83LDUSPWMHh5F7EnfI_OvaR65n0-RUASLfJm6RSEcO08wRcS3fRdDrXAOmQqOlr6ymOsxF9hez2hx4ztUDQpyHjRuTYUfXxjMXrjm1viVCtjUYHc9QIt2S3PMOjgVNr0mTPMACcOREUGJ8RLS7_U2e8qeTz0bxWjecmyVc1j7M_br4XfA6z5TchH2o0d5ewyYG82xntZGMJnvdEzYjiiI"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm">View</button>
+</div>
+</div>
+<div class="mt-2 px-2">
+<p class="font-label-md text-label-md text-on-surface">Cliff Walk</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="masonry-item group cursor-pointer">
+<div class="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
+<img alt="Beach towel and hat" class="w-full h-auto object-cover" data-alt="Top down view of a striped beach towel, straw hat, and sunglasses on white sand" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWfAex8oFK_IrwoTElVPyNIIvup_x6I6nrkiASjXyrZCYwWT3abV-VmUWXF_r-5cO8CjDEYdXj4IQT1dYrp98B0LjIDH4u2jg61fYMOPzWYch6cQddYXlU7ISM_D6bFdcbgC73IBNqoNaTo2-WaxW0B71P_sX9fhvRRLj6yKvT8AcrFZNEsDYZD7yvyOwrPcCrzS7eZP5p3MH8t-h_NzyKM5rp2KNIuw-_0zxWQaHe5lMRCEuDScJU26SC5CZmMUWci1LS-Ru7tro"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm">View</button>
+</div>
+</div>
+<div class="mt-2 px-2">
+<p class="font-label-md text-label-md text-on-surface">Essentials</p>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="masonry-item group cursor-pointer">
+<div class="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
+<img alt="Iced drink" class="w-full h-auto object-cover" data-alt="Close up of a refreshing iced cocktail with a slice of lemon against a blurry ocean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZbrt8v_z5fjACDC0K2miOUrlSimyp2vpzj5yvhFf4bHuPdqYGqSsx4uYEPTB3pnTxOjbJgTAen_ZtzKSfzQ46pj3G25k1BagpHJ7x4ihbZuUWoDH72kYnq34UuMhoBt2J_PlJ069td9RnYVwFuGY52e91320vkH1jFiS8f-NfWHIz2h_naBqfdvPtWsg6LdCjmv1X--LRJ0mX8Fm3v3hn2ny-rEP1ZFvFiPvLWdwQVWP6Os_ZR28Lr1DZ_0bdsDUT9ZXja6zEEVc"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm">View</button>
+</div>
+</div>
+<div class="mt-2 px-2">
+<p class="font-label-md text-label-md text-on-surface">Refreshment</p>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="masonry-item group cursor-pointer">
+<div class="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
+<img alt="Palm trees" class="w-full h-auto object-cover" data-alt="Looking up at tall palm trees against a clear, bright blue summer sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfM4FB1o-aGaWGBZ_wOVKds8VNp_8X6LLQObwclBbpMVTNdmisHsdBLRBSSmrJ_wF7rmtJdNgTwusNo04f7OsBjtFW2xj4wplJlFXKvaGHtiGSoPXgXkaRqk0JO27E_mUxWuZYgSQaSAB4pffmUSIB_0_TmMWXVxsjrmQ6DdNiSdEhyPZK_LpSzv8jpfB0j7o8poM57kfr4rmph4enq7mG0MHamnGMrxPywKQK1Lo9JuqNdporJCpcGmKRRsRAqjZ5xNRiqKosdm8"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm">View</button>
+</div>
+</div>
+<div class="mt-2 px-2">
+<p class="font-label-md text-label-md text-on-surface">Palms</p>
+</div>
+</div>
+<!-- Item 6 -->
+<div class="masonry-item group cursor-pointer">
+<div class="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
+<img alt="Seashells" class="w-full h-auto object-cover" data-alt="A collection of delicate, pale seashells scattered on smooth, wet sand reflecting soft light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_MYTafIkste-s0HOu9KTaRGAff7BuKOCooobRvoC0__u2GwJyYNhiM7yC7bxilYyscKSartsTH0E4RvquTHq9licvXPHKUuzQiYsQV9kL23_3GKz1o9woFcNExFuP-U9EjJpz7kLNhjRdb2fEfS72Zli_Xun5ALNJs14a6go9D8KT2XWefA0MVGCMA8Jk_tr_5gYZDHAv7VCoZqeAtLPpRgoAIVjMf3JZ9dMoatVpuIPH508393UBVCYJaWNggS5XqTjJTNr17MM"/>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm">View</button>
+</div>
+</div>
+<div class="mt-2 px-2">
+<p class="font-label-md text-label-md text-on-surface">Treasures</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (From JSON) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg shadow-none no-border md:hidden">
+<div class="flex justify-around items-center max-w-md mx-auto h-16 font-['Plus_Jakarta_SANS'] text-[10px] font-semibold">
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 flex flex-col items-center justify-center active:scale-75 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="text-zinc-900 dark:text-white scale-110 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 flex flex-col items-center justify-center active:scale-75 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="search" style="font-variation-settings: 'FILL' 1;">search</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 flex flex-col items-center justify-center active:scale-75 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 flex flex-col items-center justify-center active:scale-75 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 flex flex-col items-center justify-center active:scale-75 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</nav>
+</body></html>

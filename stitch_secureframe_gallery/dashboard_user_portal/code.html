@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "background": "#fff8f7",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-secondary-container": "#656464",
+                        "on-primary-fixed-variant": "#930012",
+                        "surface-dim": "#f5d2cf",
+                        "surface-container-highest": "#fedad7",
+                        "surface-variant": "#fedad7",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface-container-low": "#fff0ef",
+                        "primary-fixed-dim": "#ffb3ad",
+                        "primary-container": "#e60023",
+                        "inverse-primary": "#ffb3ad",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#412b29",
+                        "on-surface-variant": "#5e3f3c",
+                        "on-tertiary-fixed-variant": "#004b73",
+                        "on-surface": "#2a1615",
+                        "on-tertiary-container": "#f7f9ff",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-bright": "#fff8f7",
+                        "inverse-on-surface": "#ffedeb",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#e5e2e1",
+                        "secondary": "#5f5e5e",
+                        "surface-container": "#ffe9e7",
+                        "primary-fixed": "#ffdad7",
+                        "on-background": "#2a1615",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#0079b6",
+                        "on-primary-fixed": "#410004",
+                        "tertiary": "#005f90",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#ffe2df",
+                        "outline": "#936e6b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface": "#fff8f7",
+                        "primary": "#b7001a",
+                        "on-tertiary-fixed": "#001e31",
+                        "surface-tint": "#c0001b",
+                        "outline-variant": "#e8bcb8",
+                        "tertiary-fixed-dim": "#92ccff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#fff7f6",
+                        "tertiary-fixed": "#cce5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "grid-gutter": "16px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "container-margin": "24px",
+                        "sm": "8px",
+                        "unit": "4px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0 pt-20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)]">
+<div class="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
+<button class="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 p-2 rounded-full active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+</button>
+<h1 class="text-[#E60023] font-bold text-2xl tracking-tighter font-['Plus_Jakarta_SANS'] antialiased">Search</h1>
+<button class="w-10 h-10 rounded-full overflow-hidden hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 active:scale-95 transition-transform duration-200">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="close-up portrait of a young woman with natural makeup looking at camera with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2_hx-MjVfjPpnY1Zxp7s5iViNwkw3jfa_SSMPKXJcemkwyFgD3OEobIFA2-Ai_JZecnETh0oWsRwrQEcbrCDvkILFPBCJAvfSLQmLRtqAN3M5C4im0_MFphShtb5YpyHsAtin6Sz6KJyINSY22wGtxNs1Q4EP1GFLDoZuNL44MRLRd4fWDD2ULYhiIxZA4Uao6EQpYkMgvgB4xzZ0_GfIezuF6n_sv8ApxjZNTGOyaC7LC-qr5AaLwiv7cxKnLbtpvOZKPZtBW-Q"/>
+</button>
+</div>
+<!-- Desktop Navigation (hidden on mobile) -->
+<nav class="hidden md:flex justify-center gap-8 py-3 border-t border-zinc-100 dark:border-zinc-800">
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 px-4 py-2 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 px-4 py-2 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-7xl mx-auto px-container-margin py-lg mt-8">
+<!-- Welcome Section -->
+<section class="mb-xl text-center md:text-left">
+<h2 class="font-display-lg text-display-lg text-on-surface mb-2">Welcome back, Sarah</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Here's an overview of your creative portfolio.</p>
+</section>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-grid-gutter mb-xl">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+<span class="material-symbols-outlined text-primary-container mb-md text-3xl" data-icon="photo_library" style="font-variation-settings: 'FILL' 1;">photo_library</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">42</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Total Albums</p>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+<span class="material-symbols-outlined text-tertiary-container mb-md text-3xl" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">38</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Approved</p>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+<span class="material-symbols-outlined text-secondary mb-md text-3xl" data-icon="pending" style="font-variation-settings: 'FILL' 1;">pending</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">4</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Pending</p>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+<span class="material-symbols-outlined text-primary mb-md text-3xl" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">12k</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Total Likes</p>
+</div>
+</section>
+<!-- Recent Albums Section -->
+<section>
+<div class="flex justify-between items-end mb-lg">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Recent Albums</h2>
+<a class="font-label-md text-label-md text-primary-container hover:underline" href="#">View All</a>
+</div>
+<!-- Masonry-style Grid -->
+<div class="columns-1 sm:columns-2 lg:columns-3 gap-grid-gutter space-y-grid-gutter">
+<!-- Album Card 1 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] group cursor-pointer relative">
+<div class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-label-sm text-label-sm text-zinc-800">Approved</span>
+</div>
+<div class="aspect-[3/4] overflow-hidden">
+<img alt="Summer Collection" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="minimalist architectural photography with clean lines blue sky and soft sunlight casting geometric shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEhJYnYN3mHYZGpieBnKiF6oUOAM_jBlQ3RnN8PsLSud_OCVYgLxWVS1Lm_pUtkkI7rk8HMTJesZzTNBqoQc7tbaR1c4xX1gqoHKUY_pgaNsuWRmhcX4WHAIF_D7sATPNOxZ5P13l7mK7-pev2KpKekiKcnAh0nfkCrnwanMEQYEq5iY7cqLxWTg-bzFCa2nxknoARRMLSO2dJ6iymBJLGqhzPVOKLLe797wGQIBCzecuuVm7POrAxtCk2VwezEG3WWSBibXchVak"/>
+</div>
+<div class="p-md">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1">Summer Minimal</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">24 photos • Edited</p>
+</div>
+</div>
+<!-- Album Card 2 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] group cursor-pointer relative">
+<div class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+<span class="font-label-sm text-label-sm text-zinc-800">Pending</span>
+</div>
+<div class="aspect-square overflow-hidden">
+<img alt="Interior Design" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="cozy modern living room interior with neutral colors plush textures and warm morning sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCR28O9vFFJX-waWGqUiFcKNJvy60jD11EkhpTzXMpORUeqvq06B7ZrN3qRBATEv5pnLdMQfRekuqbluqaYY_Gl7_0SMc3xdeKFYDfyQOWUnSCSdOoAkTulvQA44k0gXMasbxXiBrHch2SqHBF9GfrKlFapghae6HKSz-KuOTYLNrdWI6W0KoQ_CcYVACZNywf7jvmvfmhrUfc092IO4WNPMzNDumfnXZ-kJ8qkSWOUjN_vKOcFGY8DUFojvxhMlcCc9LOEms3KKoY"/>
+</div>
+<div class="p-md">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1">Cozy Interiors</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">18 photos • Raw</p>
+</div>
+</div>
+<!-- Album Card 3 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] group cursor-pointer relative">
+<div class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-label-sm text-label-sm text-zinc-800">Approved</span>
+</div>
+<div class="aspect-[4/5] overflow-hidden">
+<img alt="Autumn Vibes" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="close up of trendy autumn fashion accessories laid out on a clean white surface with soft even lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAbQKHVZ2IsMm2zo062nvd1SJtYoHqTqsIsqGhZ-afcOMRHoIFwsz0NHtw--n4CRSlJ6CIjS7QHGv1gzQUuODILPAV3F7aRln1X5xEhSifssf2VB5MmwGaiyswejGNZfYeRl-o4Qs0E1pdfafzeMbdeOTOUhPXTDRIvjAJEUj137wEli6-v8AyRF1G2pvoJlvcCB97BV0HrvzXGVNQVb3Es7bjktEaphl7m_WwSvjDaI4WmzK71PwH1OjG3ZNrcNqqXrNVdgAREXk"/>
+</div>
+<div class="p-md">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1">Autumn Edit</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">32 photos • Edited</p>
+</div>
+</div>
+<!-- Album Card 4 -->
+<div class="break-inside-avoid bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] group cursor-pointer relative">
+<div class="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-label-sm text-label-sm text-zinc-800">Approved</span>
+</div>
+<div class="aspect-video overflow-hidden">
+<img alt="Travel" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="breathtaking landscape view of mountains reflecting in a clear alpine lake during golden hour" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHsS9U6OZ395RUUMBMurewRHAra5IbdqZ4XyguYn7qwjYXAGEbuSNRuJ2b5T4Fd_ZAF32beQH-8CYY5zZBb9Ns8-sf6V81isI910u5ETaUOcLliPCdFWOWTbVlDd3CGDj0tC4U7A9jGYZ54LjvL-rC3YtZy9yVlO23CCYt26uPTmGX4DN4Fko9uAsjODc8Cs4DpuhzYSjfEs4fOr3pHHRlBHIh-OQR_ZdTMEEYMh1y1Rmmh86I9dESx6LAU-Eyu3i76a4wRYtnT6A"/>
+</div>
+<div class="p-md">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1">Alpine Journey</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">56 photos • Edited</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg shadow-none">
+<div class="flex justify-around items-center max-w-md mx-auto h-16">
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]" data-icon="home">home</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]" data-icon="search">search</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]" data-icon="add">add</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-900 dark:text-white scale-110 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</div>
+</nav>
+</body></html>

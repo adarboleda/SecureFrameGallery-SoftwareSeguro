@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, Image as ImageIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { albumService } from "@/services/album.service";
-import { imageService } from "@/services/image.service";
+import { fileService } from "@/services/file.service";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 interface Album {
   id: string;
@@ -14,24 +14,30 @@ interface Album {
   created_at: string;
 }
 
-interface Image {
+interface FileData {
   id: string;
   url: string;
+  type: string;
 }
 
 export default function PublicGallery() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
-  const [images, setImages] = useState<Image[]>([]);
+  const [files, setFiles] = useState<FileData[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
     fetchAlbums();
   }, []);
 
   useEffect(() => {
     if (selectedAlbum) {
-      fetchImages(selectedAlbum);
+      fetchFiles(selectedAlbum);
     }
   }, [selectedAlbum]);
 
@@ -49,95 +55,120 @@ export default function PublicGallery() {
     }
   }
 
-  async function fetchImages(albumId: string) {
+  async function fetchFiles(albumId: string) {
     try {
-      const data = await imageService.getPublicImages(albumId);
-      setImages(data.images || []);
+      const data = await fileService.getPublicFiles(albumId);
+      setFiles(data.files || []);
     } catch (err) {
       console.error(err);
     }
   }
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Navbar */}
-      <nav className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-blue-500" />
-            <span className="font-bold text-lg tracking-tight">SecureFrame</span>
-          </div>
-          <div className="flex gap-4">
-            <Link href="/login">
-              <Button variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10 text-gray-300">
-                Iniciar Sesión
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.refresh();
+  };
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-12 text-center space-y-4">
-          <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-            Galería Pública Segura
-          </h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Explora las imágenes compartidas por la comunidad. Todo el contenido ha sido rigurosamente escaneado contra amenazas LSB y esteganográficas.
-          </p>
+  return (
+    <div className="bg-background text-on-background font-body-md antialiased pt-24 pb-32 min-h-screen">
+      {/* TopAppBar */}
+      <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] flex items-center justify-between px-6 py-4 transition-transform duration-200">
+        <div className="flex items-center gap-4 w-full">
+          <button className="flex items-center justify-center w-10 h-10 hover:bg-zinc-100 transition-colors duration-200 rounded-full shrink-0">
+            <span className="material-symbols-outlined text-[#E60023]">potted_plant</span>
+          </button>
+          
+          <div className="flex-1 max-w-2xl mx-auto hidden md:flex items-center bg-[#F0F0F0] rounded-full h-12 px-4 shadow-sm hover:shadow-md transition-shadow">
+            <span className="material-symbols-outlined text-secondary mr-2">search</span>
+            <input className="bg-transparent border-none outline-none focus:ring-0 w-full text-on-surface font-body-md placeholder:text-secondary px-0" placeholder="Buscar álbumes" type="text"/>
+          </div>
+          
+          <div className="flex-1 md:hidden flex justify-end">
+            <button className="flex items-center justify-center w-10 h-10 hover:bg-zinc-100 transition-colors duration-200 rounded-full shrink-0">
+              <span className="material-symbols-outlined text-zinc-900">search</span>
+            </button>
+          </div>
+          
+          {user ? (
+            <div className="flex items-center gap-2">
+              <Link href="/dashboard">
+                <button className="bg-[#412b29] text-white px-5 py-2.5 rounded-full font-label-md text-label-md hover:bg-zinc-800 transition-colors duration-200 shadow-sm cursor-pointer">
+                  Dashboard
+                </button>
+              </Link>
+              <button onClick={handleLogout} className="flex items-center justify-center w-10 h-10 hover:bg-red-50 text-red-500 transition-colors duration-200 rounded-full shrink-0 cursor-pointer" title="Cerrar sesión">
+                <span className="material-symbols-outlined">logout</span>
+              </button>
+            </div>
+          ) : (
+            <Link href="/login">
+              <button className="bg-[#412b29] text-white px-5 py-2.5 rounded-full font-label-md text-label-md hover:bg-zinc-800 transition-colors duration-200 shadow-sm cursor-pointer">
+                Iniciar Sesión
+              </button>
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {/* Main Content Canvas */}
+      <main className="px-container-margin mx-auto w-full max-w-[1600px]">
+        
+        {/* Album Filters */}
+        <div className="flex items-center gap-sm mb-lg overflow-x-auto pb-2">
+          {albums.length === 0 && !loading && (
+             <span className="text-secondary font-label-md">No se encontraron álbumes públicos.</span>
+          )}
+          {albums.map((album) => (
+            <button 
+              key={album.id}
+              onClick={() => setSelectedAlbum(album.id)}
+              className={`px-4 py-2 rounded-full font-label-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${selectedAlbum === album.id ? "bg-[#111111] text-white" : "bg-secondary-fixed text-on-surface hover:bg-secondary-fixed-dim"}`}
+            >
+              {album.title}
+            </button>
+          ))}
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <div className="col-span-full py-20 flex justify-center">
+            <span className="material-symbols-outlined animate-spin text-primary">refresh</span>
           </div>
+        ) : files.length === 0 ? (
+          <div className="col-span-full py-20 text-center border-2 border-dashed border-outline-variant rounded-[32px] text-secondary">
+             <span className="material-symbols-outlined text-4xl mb-2">image</span>
+             <p>Aún no hay archivos públicos.</p>
+           </div>
         ) : (
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Sidebar Albums */}
-            <div className="w-full md:w-64 flex-shrink-0 space-y-2">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Álbumes Aprobados</h2>
-              {albums.length === 0 && <p className="text-sm text-gray-500">No hay álbumes públicos aún.</p>}
-              {albums.map((album) => (
-                <button
-                  key={album.id}
-                  onClick={() => setSelectedAlbum(album.id)}
-                  className={`w-full text-left p-4 rounded-xl transition-all ${
-                    selectedAlbum === album.id 
-                      ? "bg-blue-500/10 border border-blue-500/30 text-white" 
-                      : "bg-black/40 border border-white/5 text-gray-400 hover:bg-white/5"
-                  }`}
-                >
-                  <h3 className="font-medium truncate">{album.title}</h3>
-                  <p className="text-xs mt-1 truncate">{album.description}</p>
-                </button>
-              ))}
-            </div>
-
-            {/* Image Grid */}
-            <div className="flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {images.length === 0 && selectedAlbum && (
-                  <div className="col-span-full py-20 text-center text-gray-500 border border-dashed border-white/10 rounded-2xl">
-                    <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>Este álbum no tiene imágenes limpias aún.</p>
-                  </div>
-                )}
-                {images.map((img) => (
-                  <div key={img.id} className="group relative aspect-square rounded-2xl overflow-hidden bg-black/50 border border-white/10">
+          <div className="masonry-grid">
+            {files.map((file) => (
+              <article key={file.id} className="masonry-item relative group cursor-pointer">
+                <div className="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] relative">
+                  
+                  {file.type === "pdf" ? (
+                    <iframe src={`${file.url}#view=FitH&toolbar=0&navpanes=0`} className="w-full h-96 border-0" title="PDF Preview"></iframe>
+                  ) : (
                     <img 
-                      src={img.url} 
-                      alt="Secure image" 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      src={file.url} 
+                      alt="Gallery file" 
+                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                      <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3" /> Limpio
-                      </span>
-                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm pointer-events-none">
+                    <button className="bg-white/95 text-on-surface px-6 py-3 rounded-full font-label-md text-label-md shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 pointer-events-auto cursor-pointer">
+                      Ver Detalles
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+                <div className="mt-3 px-2 flex justify-between items-center">
+                  <p className="font-label-md text-label-md text-on-surface">Colección Segura</p>
+                  <button className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center hover:bg-surface-variant transition-colors cursor-pointer text-secondary">
+                    <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </main>

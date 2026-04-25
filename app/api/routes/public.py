@@ -31,10 +31,10 @@ async def get_public_albums(response: Response):
     
     return {"albums": albums_data.data}
 
-@router.get("/albums/{album_id}/images")
-async def get_public_images(album_id: str, response: Response):
+@router.get("/albums/{album_id}/files")
+async def get_public_files(album_id: str, response: Response):
     """
-    Devuelve las URLs de las imágenes "limpias" de un álbum aprobado.
+    Devuelve las URLs de los archivos "limpios" de un álbum aprobado.
     """
     add_security_headers(response)
     
@@ -42,20 +42,20 @@ async def get_public_images(album_id: str, response: Response):
     album_check = supabase.table("albums").select("*").eq("id", album_id).eq("status", "approved").eq("privacy", "public").execute()
     if not album_check.data:
         # Devolvemos array vacío para no filtrar información sobre si existe un álbum privado
-        return {"images": []}
+        return {"files": []}
         
-    # Buscar las imágenes que pasaron el análisis LSB (status = clean)
-    images_data = supabase.table("images").select("id, storage_path, created_at").eq("album_id", album_id).eq("status", "clean").execute()
+    # Buscar los archivos que pasaron el análisis (status = clean)
+    files_data = supabase.table("files").select("id, storage_path, file_type, created_at").eq("album_id", album_id).eq("status", "clean").execute()
     
     # Construir las URLs públicas usando Supabase Storage
-    # supabase.storage.from_("bucket").get_public_url("path")
-    result_images = []
-    for img in images_data.data:
-        public_url = supabase.storage.from_("secure-gallery-images").get_public_url(img["storage_path"])
-        result_images.append({
-            "id": img["id"],
+    result_files = []
+    for file in files_data.data:
+        public_url = supabase.storage.from_("secure-gallery-images").get_public_url(file["storage_path"])
+        result_files.append({
+            "id": file["id"],
             "url": public_url,
-            "created_at": img["created_at"]
+            "type": file["file_type"],
+            "created_at": file["created_at"]
         })
         
-    return {"images": result_images}
+    return {"files": result_files}

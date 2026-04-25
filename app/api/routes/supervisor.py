@@ -31,23 +31,23 @@ async def resolve_album(album_id: str, decision: Decision):
 # RF04: FLUJO DE REVISIÓN MANUAL (SUPERVISOR)
 # ==========================================
 @router.get("/quarantine")
-async def get_quarantined_images(supervisor_id: str):
+async def get_quarantined_files(supervisor_id: str):
     """
-    Obtiene la lista de imágenes retenidas por el algoritmo LSB.
+    Obtiene la lista de archivos retenidos por los algoritmos de análisis.
     """
     user_profile = supabase.table("profiles").select("role").eq("id", supervisor_id).execute()
     
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
         
-    quarantine_data = supabase.table("images").select("*").eq("status", "quarantined").execute()
+    quarantine_data = supabase.table("files").select("*").eq("status", "quarantined").execute()
     
-    return {"quarantined_images": quarantine_data.data}
+    return {"quarantined_files": quarantine_data.data}
 
-@router.patch("/quarantine/{image_id}")
-async def resolve_quarantine(image_id: str, decision: Decision):
+@router.patch("/quarantine/{file_id}")
+async def resolve_quarantine(file_id: str, decision: Decision):
     """
-    El supervisor aprueba o rechaza la imagen.
+    El supervisor aprueba o rechaza el archivo.
     """
     user_profile = supabase.table("profiles").select("role").eq("id", decision.supervisor_id).execute()
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
@@ -56,11 +56,11 @@ async def resolve_quarantine(image_id: str, decision: Decision):
     new_status = "clean" if decision.action == "approve" else "rejected"
     
     # 3. Lógica de movimiento en Storage (RF04)
-    # Primero buscamos la imagen para saber su path actual
-    image_record = supabase.table("images").select("*").eq("id", image_id).execute()
-    if image_record.data:
-        img_data = image_record.data[0]
-        old_path = img_data["storage_path"]
+    # Primero buscamos el archivo para saber su path actual
+    file_record = supabase.table("files").select("*").eq("id", file_id).execute()
+    if file_record.data:
+        f_data = file_record.data[0]
+        old_path = f_data["storage_path"]
         
         if decision.action == "approve":
             # Mover de cuarentena a público
@@ -68,15 +68,15 @@ async def resolve_quarantine(image_id: str, decision: Decision):
             supabase.storage.from_("secure-gallery-images").move(old_path, new_path)
             
             # Actualizar DB
-            update_response = supabase.table("images").update({
+            update_response = supabase.table("files").update({
                 "status": new_status,
                 "storage_path": new_path
-            }).eq("id", image_id).execute()
-            return {"message": f"Imagen aprobada y movida a público.", "data": update_response.data}
+            }).eq("id", file_id).execute()
+            return {"message": f"Archivo aprobado y movido a público.", "data": update_response.data}
         else:
             # Eliminar del storage por rechazo
             supabase.storage.from_("secure-gallery-images").remove([old_path])
-            update_response = supabase.table("images").update({"status": new_status}).eq("id", image_id).execute()
-            return {"message": f"Imagen rechazada y eliminada del servidor.", "data": update_response.data}
+            update_response = supabase.table("files").update({"status": new_status}).eq("id", file_id).execute()
+            return {"message": f"Archivo rechazado y eliminado del servidor.", "data": update_response.data}
             
-    return {"message": "Imagen no encontrada."}
+    return {"message": "Archivo no encontrado."}

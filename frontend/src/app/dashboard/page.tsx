@@ -1,190 +1,187 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { supabase } from "@/lib/supabase";
-import { Shield, Upload, Plus, LogOut, Loader2, AlertTriangle } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { albumSchema, type AlbumFormData } from "@/schemas/album.schema";
 import { albumService } from "@/services/album.service";
-import { imageService } from "@/services/image.service";
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-  const [albums, setAlbums] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploadingTo, setUploadingTo] = useState<string | null>(null);
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+
+interface Album {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
+
+export default function Dashboard() {
   const router = useRouter();
-
-  const form = useForm<AlbumFormData>({
-    resolver: zodResolver(albumSchema),
-    defaultValues: { title: "", description: "" },
-  });
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("Usuario");
 
   useEffect(() => {
-    checkUser();
-  }, []);
-
-  async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    setUser(user);
-    fetchMyAlbums(user.id);
-  }
-
-  async function fetchMyAlbums(userId: string) {
-    try {
-      const data = await albumService.getMyAlbums(userId);
-      setAlbums(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function onSubmitAlbum(values: AlbumFormData) {
-    try {
-      await albumService.requestAlbum(user.id, values.title, values.description);
-      fetchMyAlbums(user.id);
-      form.reset();
-      alert("✅ Álbum solicitado exitosamente. Esperando aprobación del supervisor.");
-    } catch (e: any) {
-      console.error(e);
-      alert("❌ Error al solicitar el álbum: " + e.message);
-    }
-  }
-
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, albumId: string) {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    
-    setUploadingTo(albumId);
-    
-    try {
-      const data = await imageService.uploadSecureImage(file, user.id, albumId);
-      
-      if (data.status === "quarantined") {
-        alert(`⚠️ ATENCIÓN: ${data.message}`);
-      } else {
-        alert("✅ Imagen subida y verificada correctamente.");
+    async function loadUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
       }
-    } catch (err: any) {
-      console.error(err);
-      alert(`Error: ${err.message || "Error de conexión"}`);
-    } finally {
-      setUploadingTo(null);
+      setUserId(user.id);
+      setUserName(user.user_metadata?.username || user.email?.split("@")[0] || "Usuario");
     }
-  }
+    loadUser();
+  }, [router]);
 
-  if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500"/></div>;
+  useEffect(() => {
+    async function loadAlbums() {
+      if (!userId) return;
+      try {
+        const data = await albumService.getMyAlbums(userId);
+        setAlbums(data || []);
+      } catch (err) {
+        console.error("Error al cargar álbumes", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAlbums();
+  }, [userId]);
+
+  const stats = {
+    total: albums.length,
+    approved: albums.filter(a => a.status === 'approved').length,
+    pending: albums.filter(a => a.status === 'pending').length,
+  };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
-        <header className="flex items-center justify-between bg-black/40 border border-white/10 p-6 rounded-2xl backdrop-blur-md">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Shield className="text-blue-500" /> Mi Centro de Operaciones
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">{user?.email}</p>
-          </div>
-          <Button variant="ghost" onClick={() => supabase.auth.signOut().then(() => router.push("/"))} className="text-gray-400 hover:text-white hover:bg-white/5">
-            <LogOut className="w-4 h-4 mr-2" /> Salir
-          </Button>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Formulario Crear Álbum */}
-          <div className="lg:col-span-1">
-            <Card className="bg-black/40 border-white/10 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle>Solicitar Álbum</CardTitle>
-                <CardDescription className="text-gray-400">Todo álbum nuevo debe ser aprobado por un Supervisor (RF02).</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={form.handleSubmit(onSubmitAlbum)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Título</Label>
-                    <Input {...form.register("title")} className="bg-black/50 border-white/10 text-white" />
-                    {form.formState.errors.title && <p className="text-xs text-red-400">{form.formState.errors.title.message}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Descripción</Label>
-                    <Input {...form.register("description")} className="bg-black/50 border-white/10 text-white" />
-                    {form.formState.errors.description && <p className="text-xs text-red-400">{form.formState.errors.description.message}</p>}
-                  </div>
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white">
-                    <Plus className="w-4 h-4 mr-2" /> Enviar Solicitud
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Lista de Álbumes */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-semibold">Mis Álbumes</h2>
-            {albums.length === 0 ? (
-              <div className="p-8 border border-dashed border-white/10 rounded-2xl text-center text-gray-500 bg-black/20">
-                Aún no has solicitado ningún álbum.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {albums.map((album) => (
-                  <Card key={album.id} className="bg-black/40 border-white/10 backdrop-blur-md flex flex-col">
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{album.title}</CardTitle>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          album.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/20' :
-                          album.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20' :
-                          'bg-red-500/20 text-red-400 border border-red-500/20'
-                        }`}>
-                          {album.status.toUpperCase()}
-                        </span>
-                      </div>
-                      <CardDescription className="text-gray-400">{album.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="mt-auto pt-4">
-                      {album.status === 'approved' ? (
-                        <div className="relative">
-                          <input 
-                            type="file" 
-                            accept="image/png, image/jpeg" 
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            onChange={(e) => handleFileUpload(e, album.id)}
-                            disabled={uploadingTo === album.id}
-                          />
-                          <Button variant="outline" className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10 pointer-events-none">
-                            {uploadingTo === album.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                            {uploadingTo === album.id ? 'Analizando...' : 'Subir Imagen Segura'}
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-sm text-yellow-500/80 bg-yellow-500/10 p-2 rounded border border-yellow-500/20">
-                          <AlertTriangle className="w-4 h-4" />
-                          Requiere aprobación para subir fotos.
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+    <div className="bg-background text-on-background min-h-screen pb-24 md:pb-0 pt-20">
+      {/* TopAppBar */}
+      <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
+          <Link href="/">
+            <button className="text-zinc-900 hover:bg-zinc-100 transition-colors duration-200 p-2 rounded-full active:scale-95 cursor-pointer">
+              <span className="material-symbols-outlined">potted_plant</span>
+            </button>
+          </Link>
+          <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter antialiased">SecureFrame</h1>
+          <button className="w-10 h-10 rounded-full overflow-hidden hover:bg-zinc-100 transition-colors duration-200 active:scale-95 cursor-pointer">
+            <span className="material-symbols-outlined mt-2">person</span>
+          </button>
         </div>
-      </div>
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex justify-center gap-8 py-3 border-t border-zinc-100">
+          <Link href="/">
+            <div className="flex flex-col items-center gap-1 text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-xl cursor-pointer">
+              <span className="material-symbols-outlined">home</span>
+              <span className="font-label-md text-label-md">Inicio</span>
+            </div>
+          </Link>
+          <Link href="/dashboard">
+            <div className="flex flex-col items-center gap-1 text-zinc-900 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-xl cursor-pointer">
+              <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>person</span>
+              <span className="font-label-md text-label-md">Perfil</span>
+            </div>
+          </Link>
+          <Link href="/albums/new">
+            <div className="flex flex-col items-center gap-1 text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-xl cursor-pointer">
+              <span className="material-symbols-outlined">add</span>
+              <span className="font-label-md text-label-md">Nuevo Álbum</span>
+            </div>
+          </Link>
+        </nav>
+      </header>
+
+      {/* Main Content Canvas */}
+      <main className="max-w-7xl mx-auto px-container-margin py-lg mt-8">
+        {/* Welcome Section */}
+        <section className="mb-xl text-center md:text-left">
+          <h2 className="font-display-lg text-display-lg text-on-surface mb-2">Bienvenido de vuelta, {userName}</h2>
+          <p className="font-body-lg text-body-lg text-on-surface-variant">Aquí tienes un resumen de tu portafolio creativo.</p>
+        </section>
+
+        {/* Stats Bento Grid */}
+        <section className="grid grid-cols-2 md:grid-cols-3 gap-grid-gutter mb-xl">
+          <div className="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+            <span className="material-symbols-outlined text-primary-container mb-md text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>photo_library</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">{stats.total}</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Total de Álbumes</p>
+          </div>
+          <div className="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+            <span className="material-symbols-outlined text-tertiary-container mb-md text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>check_circle</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">{stats.approved}</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Aprobados</p>
+          </div>
+          <div className="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
+            <span className="material-symbols-outlined text-secondary mb-md text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>pending</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">{stats.pending}</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Pendientes</p>
+          </div>
+        </section>
+
+        {/* Recent Albums Section */}
+        <section>
+          <div className="flex justify-between items-end mb-lg">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">Álbumes Recientes</h2>
+            <Link href="/albums/new" className="font-label-md text-label-md text-primary-container hover:underline cursor-pointer">
+              Crear Nuevo
+            </Link>
+          </div>
+          
+          {loading ? (
+            <div className="flex justify-center p-20"><span className="material-symbols-outlined animate-spin">refresh</span></div>
+          ) : albums.length === 0 ? (
+            <div className="text-center py-20 text-on-surface-variant border border-dashed border-outline-variant rounded-xl">
+              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">folder_open</span>
+              <p>Aún no tienes ningún álbum.</p>
+            </div>
+          ) : (
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-grid-gutter space-y-grid-gutter">
+              {albums.map((album) => (
+                <Link key={album.id} href={`/albums/${album.id}`}>
+                  <div className="break-inside-avoid bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] group cursor-pointer relative border border-transparent hover:border-primary-container/20 transition-colors">
+                    <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                      <span className={`w-2 h-2 rounded-full ${album.status === 'approved' ? 'bg-green-500' : album.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
+                      <span className="font-label-sm text-label-sm text-zinc-800 capitalize">{album.status === 'approved' ? 'Aprobado' : album.status === 'pending' ? 'Pendiente' : album.status}</span>
+                    </div>
+                    <div className="p-xl bg-surface-container flex items-center justify-center">
+                      <span className="material-symbols-outlined text-6xl text-secondary opacity-20">photo_library</span>
+                    </div>
+                    <div className="p-md">
+                      <h3 className="font-headline-md text-headline-md text-on-surface mb-1 truncate">{album.title}</h3>
+                      <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">{album.description}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* BottomNavBar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 bg-white/95 backdrop-blur-lg shadow-none border-t border-outline-variant/30">
+        <div className="flex justify-around items-center max-w-md mx-auto h-16">
+          <Link href="/">
+            <button className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center cursor-pointer">
+              <span className="material-symbols-outlined text-[28px]">home</span>
+              <span className="text-[10px]">Inicio</span>
+            </button>
+          </Link>
+          <Link href="/albums/new">
+            <button className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center cursor-pointer">
+              <span className="material-symbols-outlined text-[28px]">add</span>
+              <span className="text-[10px]">Nuevo</span>
+            </button>
+          </Link>
+          <button className="text-zinc-900 scale-110 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center">
+            <span className="material-symbols-outlined text-[28px]" style={{fontVariationSettings: "'FILL' 1"}}>person</span>
+            <span className="text-[10px]">Perfil</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

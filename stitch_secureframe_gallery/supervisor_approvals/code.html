@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Supervisor Approvals</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "background": "#fff8f7",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-container": "#656464",
+                    "on-primary-fixed-variant": "#930012",
+                    "surface-dim": "#f5d2cf",
+                    "surface-container-highest": "#fedad7",
+                    "surface-variant": "#fedad7",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "surface-container-low": "#fff0ef",
+                    "primary-fixed-dim": "#ffb3ad",
+                    "primary-container": "#e60023",
+                    "inverse-primary": "#ffb3ad",
+                    "error-container": "#ffdad6",
+                    "inverse-surface": "#412b29",
+                    "on-surface-variant": "#5e3f3c",
+                    "on-tertiary-fixed-variant": "#004b73",
+                    "on-surface": "#2a1615",
+                    "on-tertiary-container": "#f7f9ff",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-bright": "#fff8f7",
+                    "inverse-on-surface": "#ffedeb",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#e5e2e1",
+                    "secondary": "#5f5e5e",
+                    "surface-container": "#ffe9e7",
+                    "primary-fixed": "#ffdad7",
+                    "on-background": "#2a1615",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#0079b6",
+                    "on-primary-fixed": "#410004",
+                    "tertiary": "#005f90",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#ffe2df",
+                    "outline": "#936e6b",
+                    "on-secondary-fixed-variant": "#474646",
+                    "surface": "#fff8f7",
+                    "primary": "#b7001a",
+                    "on-tertiary-fixed": "#001e31",
+                    "surface-tint": "#c0001b",
+                    "outline-variant": "#e8bcb8",
+                    "tertiary-fixed-dim": "#92ccff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#fff7f6",
+                    "tertiary-fixed": "#cce5ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "grid-gutter": "16px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "container-margin": "24px",
+                    "sm": "8px",
+                    "unit": "4px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "label-sm": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "headline-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "label-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "headline-sm": [
+                            "Plus Jakarta Sans"
+                    ]
+            },
+            "fontSize": {
+                    "display-lg": [
+                            "36px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-sm": [
+                            "11px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-md": [
+                            "12px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "1.3",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined', sans-serif;
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md antialiased">
+<header class="fixed top-0 w-full z-50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl font-['Plus_Jakarta_SANS'] antialiased shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] flex items-center justify-between px-6 py-4">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[#E60023]">potted_plant</span>
+<span class="text-[#E60023] font-bold text-2xl tracking-tighter">Search</span>
+</div>
+<div class="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="close-up portrait of young woman with neutral expression against soft natural background lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPrqz7RlknuJRjfRzQ0kY3hSiX2PM3KnnrAnZVFSx-3PvbsLdi5_PojPMuwJXu9934CRS432WG5zcO4pkoAxSJcLZ6dGARForC0t1W6N056xWtd6ZoSg3Veq2Nto7RCMU8rPZZsdH1SGGGluwEsRwydMrRCkOllgllGylm-5_5cQCpYl5n4emjWedWHEWrFq5lQEv3pocT9SXJELRrexhXQ0qv8MwP_dp-1pljrWZvCCPGluJYQIcqvho1zGbXyL55ZLMwFwi9lK4"/>
+</div>
+</header>
+<main class="pt-[100px] pb-[100px] px-container-margin max-w-7xl mx-auto">
+<div class="mb-xl flex items-end justify-between">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-background mb-unit">Pending Approvals</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Review latest album submissions</p>
+</div>
+<div class="hidden md:flex gap-sm">
+<span class="inline-flex items-center justify-center px-4 py-2 bg-surface-container-high rounded-full font-label-md text-label-md text-on-surface">Filter</span>
+<span class="inline-flex items-center justify-center px-4 py-2 bg-surface-container-high rounded-full font-label-md text-label-md text-on-surface">Sort</span>
+</div>
+</div>
+<div class="columns-1 sm:columns-2 lg:columns-3 gap-grid-gutter space-y-grid-gutter">
+<article class="break-inside-avoid bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_-12px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col group hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-shadow duration-300">
+<div class="relative w-full aspect-[4/5] bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="modern minimalist living room interior with neutral tones soft warm natural light casting shadows across white walls and wooden furniture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQeo3tv9vUlpCJD_8dq3rfv-OjPgx1lsVcWWvoDmH79ySzgJLw-gdur0_YSBJzu4FlaEKt5UC04mk1aq52JZuJbemFIolYSpSwrE6kL_ieAA-lhUuujsAnrL-_PR2vApIJ0Z8FZs_092-vEenyaLwxTifo0fCCKGsNHdN0Mrlqf5tIxmTAqM3fkfiGioxG55zwFWaPn5dCINykLo9pfrBjPlc3QXAhAeWEFDj97uJCGUAJioLDDE1APpA3T5_I_T7zvidjDWWlIYA"/>
+<div class="absolute top-md left-md">
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm">Interior</span>
+</div>
+</div>
+<div class="p-lg flex flex-col gap-md">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-unit">Nordic Minimalism Vol. 2</h2>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-body-md text-body-md">Emma Walker</span>
+</div>
+</div>
+<div class="flex gap-sm mt-auto">
+<button class="flex-1 bg-tertiary text-on-tertiary font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">check</span> Approve
+                        </button>
+<button class="flex-1 bg-error text-on-error font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">close</span> Reject
+                        </button>
+</div>
+</div>
+</article>
+<article class="break-inside-avoid bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_-12px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col group hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-shadow duration-300">
+<div class="relative w-full aspect-[3/2] bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="flat lay of healthy organic food ingredients fresh vegetables grains and herbs arranged beautifully on dark slate background with soft overhead lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvXgAOJijBe7EoCb4QncSI73rNnedlphjPdAYntve5aIdtB2CfzsHpHWy7xeHhrVgRi_GQ0T9XPKLKFQ6-m8h8gI4MFc56NzeGDDjBMNLc0I76NuT1ABb242pomQjmcchN412EVG4XnubQ6buAA0PUEuhtfnHzLYpPcXtBQw8n72HuIOLtiu4JiruJxA04OzTLTW3C8Zj8HZoXaZ83ffLUQ2RSW1MzhaR2Y37Y5tde0opQKgt7BY9VhRDVThuyAPezMer_B-3cYVU"/>
+<div class="absolute top-md left-md">
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm">Culinary</span>
+</div>
+</div>
+<div class="p-lg flex flex-col gap-md">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-unit">Organic Summer Recipes</h2>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-body-md text-body-md">Chef Marcus</span>
+</div>
+</div>
+<div class="flex gap-sm mt-auto">
+<button class="flex-1 bg-tertiary text-on-tertiary font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">check</span> Approve
+                        </button>
+<button class="flex-1 bg-error text-on-error font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">close</span> Reject
+                        </button>
+</div>
+</div>
+</article>
+<article class="break-inside-avoid bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_-12px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col group hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-shadow duration-300">
+<div class="relative w-full aspect-square bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="dramatic aerial view of winding forest road in autumn mist dark moody atmosphere with vibrant orange and red foliage contrasting against dark asphalt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_zY5OQSg9K2pBf-0Yj19gqFnoIHHTEakr60Y1RpnytjE0q2MAK-fCjPzrKje1hy9zD6N9usOzDKIaSO_mpGeqgG2sZWBDl11dNwSgJXukixNsmdFVBgDlM7dtthCqvKK9TWGZHOD40wHWSF2xH8OOMzYg19DPxvZwBkUlKZAi_pmdkDiJk9b0UfZLH5fk36D1ycVVxxVpU3MwsaX4C-41fTP7C9OCG99o50Aev27Ajmmj9c_BiwWKpsCjzrpH4pIExNmblAkiTbk"/>
+<div class="absolute top-md left-md">
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm">Nature</span>
+</div>
+</div>
+<div class="p-lg flex flex-col gap-md">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-unit">Autumn Roads Collection</h2>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-body-md text-body-md">Traveler Joe</span>
+</div>
+</div>
+<div class="flex gap-sm mt-auto">
+<button class="flex-1 bg-tertiary text-on-tertiary font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">check</span> Approve
+                        </button>
+<button class="flex-1 bg-error text-on-error font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">close</span> Reject
+                        </button>
+</div>
+</div>
+</article>
+<article class="break-inside-avoid bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_-12px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col group hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-shadow duration-300">
+<div class="relative w-full aspect-[4/3] bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="fashion editorial shot of model wearing avant-garde clothing standing in harsh sunlight creating strong graphic shadows against textured concrete wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_VIProX5_eXwvXAKwg8qBtnw8FjAaE0a-W_4xoFIqAasBGxcTc4icirGIrQqYeck48npDVamunM82Bt2awhrQIVU-AhF4uvLRckTCptBEuKdjYoIrPwSwki2zN40gpqmwPvFmUIiciQ1d2zYy9iblkK13o3d_wLCIb7hwREa8py4K-jbLYWhp6w6AQ8BTKL-IzghGQPBzEHpz2G9R5B7fSws6lEKpKn0iAcfA9bKaT3B5R-7UIk4Z30mTQS5NGmrbqmXbBpwDMXw"/>
+<div class="absolute top-md left-md">
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm">Fashion</span>
+</div>
+</div>
+<div class="p-lg flex flex-col gap-md">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-unit">Spring Lookbook '24</h2>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-body-md text-body-md">Studio X</span>
+</div>
+</div>
+<div class="flex gap-sm mt-auto">
+<button class="flex-1 bg-tertiary text-on-tertiary font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">check</span> Approve
+                        </button>
+<button class="flex-1 bg-error text-on-error font-label-md text-label-md py-3 rounded-full flex items-center justify-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">close</span> Reject
+                        </button>
+</div>
+</div>
+</article>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg flex justify-around items-center max-w-md mx-auto h-16 md:hidden">
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full active:scale-75 transition-all duration-300 ease-out p-2 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">home</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full active:scale-75 transition-all duration-300 ease-out p-2 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full active:scale-75 transition-all duration-300 ease-out p-2 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+<button class="text-zinc-900 dark:text-white scale-110 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full active:scale-75 transition-all duration-300 ease-out p-2 flex flex-col items-center justify-center relative">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-[#E60023] rounded-full"></span>
+</button>
+<button class="text-zinc-400 dark:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full active:scale-75 transition-all duration-300 ease-out p-2 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">person</span>
+</button>
+</nav>
+</body></html>

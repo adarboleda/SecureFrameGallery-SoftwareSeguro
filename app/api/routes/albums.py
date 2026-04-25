@@ -9,6 +9,14 @@ router = APIRouter()
 # ==========================================
 # RF02: GESTIÓN DE ÁLBUMES (Prevención XSS)
 # ==========================================
+
+@router.get("/my")
+async def get_my_albums(user_id: str):
+    """
+    Retorna los álbumes creados por un usuario específico.
+    """
+    response = supabase.table("albums").select("*").eq("user_id", user_id).execute()
+    return response.data
 @router.post("/request")
 @limiter.limit("10/minute")
 async def request_album(request: Request, album: AlbumCreate):

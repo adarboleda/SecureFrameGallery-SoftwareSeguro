@@ -9,9 +9,7 @@ export const albumService = {
 
   // User
   async getMyAlbums(userId: string) {
-    const { data, error } = await supabase.from("albums").select("*").eq("user_id", userId);
-    if (error) throw error;
-    return data;
+    return await apiFetch(`/api/albums/my?user_id=${userId}`);
   },
 
   async requestAlbum(userId: string, title: string, description: string) {
