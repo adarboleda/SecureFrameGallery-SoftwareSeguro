@@ -212,6 +212,13 @@ function QuarantineContent() {
 }
 
 export default function Quarantine() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
+
   return (
     <div className="bg-background text-on-background min-h-screen font-body-md text-body-md antialiased pb-24 pt-20">
       {/* TopAppBar */}
@@ -227,9 +234,9 @@ export default function Quarantine() {
             <Link href="/supervisor" className="text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md">Aprobaciones</Link>
             <span className="text-zinc-900 bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md">Análisis de Cuarentena</span>
           </nav>
-          <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
-            <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>admin_panel_settings</span>
-          </div>
+          <button onClick={handleLogout} className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer" title="Cerrar sesión">
+            <span className="material-symbols-outlined">logout</span>
+          </button>
         </div>
       </header>
 

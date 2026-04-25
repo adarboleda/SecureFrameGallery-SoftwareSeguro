@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useState } from "react";
+import Link from 'next/link';
+import { useState } from 'react';
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -15,20 +15,33 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      window.location.href = "/dashboard";
+      const userId = data.user?.id;
+      if (!userId)
+        throw new Error('No se pudo obtener el usuario autenticado.');
+
+      // Consultar el rol del usuario al backend
+      const roleRes = await fetch(
+        `http://localhost:8000/api/auth/role/${userId}`,
+      );
+      const roleData = await roleRes.json();
+
+      // Redirigir según el rol
+      if (roleData.role === 'supervisor') {
+        window.location.href = '/supervisor';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (err: any) {
-      setError(err.message || "Error al iniciar sesión");
+      setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -39,86 +52,68 @@ export default function Login() {
       <main className="w-full max-w-[480px] bg-surface-container-lowest rounded-lg p-xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] flex flex-col items-center">
         {/* Brand Icon */}
         <div className="w-16 h-16 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center mb-lg">
-          <span className="material-symbols-outlined text-display-lg" style={{fontVariationSettings: "'FILL' 1"}}>favorite</span>
+          <span
+            className="material-symbols-outlined text-display-lg"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            favorite
+          </span>
         </div>
-        
+
         <h1 className="font-display-lg text-display-lg text-on-background text-center tracking-tight mb-2">
           Bienvenido
         </h1>
         <p className="font-body-lg text-body-lg text-on-surface-variant text-center mb-8">
           Encuentra nuevas ideas para intentar
         </p>
-        
+
         {/* Form Elements */}
         <form className="w-full flex flex-col gap-md" onSubmit={handleLogin}>
           <div className="relative">
-            <input 
-              className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70" 
-              id="email" 
-              placeholder="Correo electrónico" 
-              type="email" 
+            <input
+              className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70"
+              id="email"
+              placeholder="Correo electrónico"
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="relative w-full">
-            <input 
-              className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70" 
-              id="password" 
-              placeholder="Contraseña" 
+            <input
+              className="w-full bg-secondary-fixed text-on-background font-body-lg text-body-lg rounded-full px-lg py-[18px] border-none focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest outline-none transition-all duration-200 placeholder:text-on-secondary-container/70"
+              id="password"
+              placeholder="Contraseña"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          
-          {error && <p className="text-red-500 text-sm font-label-md px-2">{error}</p>}
-          
+
+          {error && (
+            <p className="text-red-500 text-sm font-label-md px-2">{error}</p>
+          )}
+
           {/* Submit Button */}
-          <button 
-            className="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm rounded-full py-[16px] mt-md hover:bg-primary active:scale-[0.98] transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50" 
+          <button
+            className="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm rounded-full py-[16px] mt-md hover:bg-primary active:scale-[0.98] transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50"
             type="submit"
             disabled={loading}
           >
-            {loading ? "Iniciando..." : "Iniciar sesión"}
+            {loading ? 'Iniciando...' : 'Iniciar sesión'}
           </button>
         </form>
-        
-        <div className="mt-4">
-          <a className="font-label-md text-label-md text-on-surface hover:underline cursor-pointer">¿Olvidaste tu contraseña?</a>
-        </div>
-        
-        {/* Terms & Footer */}
-        <p className="font-label-sm text-label-sm text-on-surface-variant text-center mt-lg max-w-[280px]">
-          Al continuar, aceptas nuestros <a className="font-bold hover:text-on-background underline decoration-2 underline-offset-2 cursor-pointer">Términos de Servicio</a> y reconoces haber leído nuestra <a className="font-bold hover:text-on-background underline decoration-2 underline-offset-2 cursor-pointer">Política de Privacidad</a>.
-        </p>
+
         <div className="mt-xl">
-          <Link href="/register" className="font-label-md text-label-md text-on-background hover:text-primary-container transition-colors font-bold cursor-pointer">
+          <Link
+            href="/register"
+            className="font-label-md text-label-md text-on-background hover:text-primary-container transition-colors font-bold cursor-pointer"
+          >
             ¿Aún no estás en SecureFrame? Regístrate
           </Link>
         </div>
-        
-        {/* Divider */}
-        <div className="flex items-center w-full my-lg">
-          <div className="flex-grow border-t border-outline-variant"></div>
-          <span className="px-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">O</span>
-          <div className="flex-grow border-t border-outline-variant"></div>
-        </div>
-        
-        {/* Social Login */}
-        <button className="w-full bg-secondary-fixed text-on-secondary-fixed rounded-full py-[16px] font-label-md text-label-md hover:bg-secondary-container active:scale-[0.98] transition-all flex items-center justify-center gap-sm cursor-pointer" type="button">
-          Continuar con Google
-        </button>
-        
-        {/* Footer / Sign Up Link */}
-        <p className="mt-xl font-body-md text-body-md text-on-surface-variant text-center">
-          ¿Aún no estás dentro? 
-          <Link href="/register" className="font-label-md text-label-md text-on-surface hover:text-primary-container underline decoration-2 underline-offset-4 transition-colors ml-1">
-            Regístrate
-          </Link>
-        </p>
       </main>
     </div>
   );

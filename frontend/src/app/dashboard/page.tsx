@@ -29,11 +29,27 @@ export default function Dashboard() {
         router.push("/login");
         return;
       }
+      
+      // Verificar rol: si es supervisor redirigir al panel correcto
+      const roleRes = await fetch(`http://localhost:8000/api/auth/role/${user.id}`);
+      if (roleRes.ok) {
+        const { role } = await roleRes.json();
+        if (role === "supervisor") {
+          router.replace("/supervisor");
+          return;
+        }
+      }
+      
       setUserId(user.id);
       setUserName(user.user_metadata?.username || user.email?.split("@")[0] || "Usuario");
     }
     loadUser();
   }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   useEffect(() => {
     async function loadAlbums() {
@@ -67,8 +83,8 @@ export default function Dashboard() {
             </button>
           </Link>
           <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter antialiased">SecureFrame</h1>
-          <button className="w-10 h-10 rounded-full overflow-hidden hover:bg-zinc-100 transition-colors duration-200 active:scale-95 cursor-pointer">
-            <span className="material-symbols-outlined mt-2">person</span>
+          <button onClick={handleLogout} className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer" title="Cerrar sesión">
+            <span className="material-symbols-outlined">logout</span>
           </button>
         </div>
         {/* Desktop Navigation */}
@@ -123,7 +139,7 @@ export default function Dashboard() {
 
         {/* Recent Albums Section */}
         <section>
-          <div className="flex justify-between items-end mb-lg">
+          <div className="flex justify-between items-end mb-6">
             <h2 className="font-headline-sm text-headline-sm text-on-surface">Álbumes Recientes</h2>
             <Link href="/albums/new" className="font-label-md text-label-md text-primary-container hover:underline cursor-pointer">
               Crear Nuevo
@@ -138,20 +154,25 @@ export default function Dashboard() {
               <p>Aún no tienes ningún álbum.</p>
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-grid-gutter space-y-grid-gutter">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {albums.map((album) => (
                 <Link key={album.id} href={`/albums/${album.id}`}>
-                  <div className="break-inside-avoid bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] group cursor-pointer relative border border-transparent hover:border-primary-container/20 transition-colors">
-                    <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                      <span className={`w-2 h-2 rounded-full ${album.status === 'approved' ? 'bg-green-500' : album.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
-                      <span className="font-label-sm text-label-sm text-zinc-800 capitalize">{album.status === 'approved' ? 'Aprobado' : album.status === 'pending' ? 'Pendiente' : album.status}</span>
+                  <div className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] group cursor-pointer relative border border-transparent hover:border-primary-container/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.1)]">
+                    <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                      <span className={`w-2 h-2 rounded-full ${
+                        album.status === 'approved' ? 'bg-green-500' :
+                        album.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></span>
+                      <span className="font-label-sm text-label-sm text-zinc-800">
+                        {album.status === 'approved' ? 'Aprobado' : album.status === 'pending' ? 'Pendiente' : 'Rechazado'}
+                      </span>
                     </div>
-                    <div className="p-xl bg-surface-container flex items-center justify-center">
-                      <span className="material-symbols-outlined text-6xl text-secondary opacity-20">photo_library</span>
+                    <div className="p-8 bg-surface-container flex items-center justify-center">
+                      <span className="material-symbols-outlined text-5xl text-secondary opacity-20">photo_library</span>
                     </div>
-                    <div className="p-md">
-                      <h3 className="font-headline-md text-headline-md text-on-surface mb-1 truncate">{album.title}</h3>
-                      <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">{album.description}</p>
+                    <div className="p-5">
+                      <h3 className="font-headline-sm text-headline-sm text-on-surface mb-1.5 truncate">{album.title}</h3>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">{album.description}</p>
                     </div>
                   </div>
                 </Link>

@@ -14,51 +14,79 @@ def setup_test_environment():
     print("Iniciando configuración del entorno de prueba...\n")
     
     try:
-        # 1. Crear un Usuario de Prueba
-        print("1. Creando usuario de prueba...")
-        # Generamos un email aleatorio para evitar colisiones si ejecutas el script varias veces
-        email = f"demo_{uuid.uuid4().hex[:6]}@securegallery.com"
+        # 1. Crear un Usuario Normal
+        print("1. Creando usuario normal de prueba...")
+        user_email = f"user_{uuid.uuid4().hex[:6]}@securegallery.com"
         
-        # IMPORTANTE: Esto solo funciona si estás usando la SERVICE_ROLE key
-        user = supabase.auth.admin.create_user({
-            "email": email,
+        user_res = supabase.auth.admin.create_user({
+            "email": user_email,
             "password": "SecurePassword123!",
             "email_confirm": True
         })
-        user_id = user.user.id
-        print(f"   [Éxito] Usuario creado: {email}")
-        print(f"   [Éxito] ID del Usuario: {user_id}\n")
+        user_id = user_res.user.id
+        print(f"   [Éxito] Usuario creado: {user_email}")
         
-        # 2. Crear un Álbum para ese Usuario
-        print("2. Creando álbum de prueba...")
+        # 2. Crear un Supervisor
+        print("\n2. Creando usuario supervisor...")
+        sup_email = f"admin_{uuid.uuid4().hex[:6]}@securegallery.com"
+        sup_res = supabase.auth.admin.create_user({
+            "email": sup_email,
+            "password": "SecurePassword123!",
+            "email_confirm": True
+        })
+        sup_id = sup_res.user.id
+        print(f"   [Éxito] Supervisor creado: {sup_email}")
+        
+        # Actualizar rol a supervisor
+        supabase.table("profiles").update({"role": "supervisor"}).eq("id", sup_id).execute()
+        print("   [Éxito] Rol actualizado a 'supervisor' en la DB.")
+
+        # 3. Crear un Álbum para el Usuario Normal
+        print("\n3. Creando álbum de prueba...")
         album_response = supabase.table("albums").insert({
             "user_id": user_id,
-            "title": "Álbum Demo para Pruebas LSB",
-            "description": "Álbum generado automáticamente por el script de configuración."
+            "title": "Archivos Pendientes Demo",
+            "description": "Álbum generado con archivos de prueba."
         }).execute()
         
         album_id = album_response.data[0]['id']
         print(f"   [Éxito] Álbum creado.")
-        print(f"   [Éxito] ID del Álbum: {album_id}\n")
         
-        # 3. Intentar crear el Bucket de Storage (si no existe)
-        print("3. Verificando Bucket de imágenes...")
+        # 4. Crear un Archivo en Cuarentena
+        print("\n4. Creando archivo en cuarentena...")
+        file_response = supabase.table("files").insert({
+            "album_id": album_id,
+            "user_id": user_id,
+            "storage_path": "quarantine/test_image.png",
+            "file_type": "image",
+            "status": "quarantined",
+            "analysis_metadata": {"stego_entropy": 95.4, "stego_detected": True}
+        }).execute()
+        print("   [Éxito] Archivo en cuarentena insertado en la base de datos.")
+        
+        # 5. Verificando Bucket
+        print("\n5. Verificando Bucket de imágenes...")
         buckets = supabase.storage.list_buckets()
         bucket_names = [b.name for b in buckets]
         
         if "secure-gallery-images" not in bucket_names:
             supabase.storage.create_bucket("secure-gallery-images", {"public": True})
-            print("   [Éxito] Bucket 'secure-gallery-images' creado en Storage.\n")
-        else:
-            print("   [Éxito] El bucket 'secure-gallery-images' ya existía.\n")
+            print("   [Éxito] Bucket 'secure-gallery-images' creado.")
         
-        # 4. Mostrar resumen
+        # 6. Mostrar resumen
         print("="*60)
-        print(" CONFIGURACION COMPLETADA ")
+        print(" CONFIGURACIÓN COMPLETADA EXITOSAMENTE ")
         print("="*60)
-        print("Ve a Swagger UI (http://localhost:8000/docs) e ingresa estos UUIDs:")
-        print(f"-> user_id:  {user_id}")
-        print(f"-> album_id: {album_id}")
+        print("Puedes iniciar sesión en el Frontend con las siguientes cuentas:\n")
+        print("--- CUENTA DE USUARIO NORMAL ---")
+        print(f"Email:    {user_email}")
+        print("Password: SecurePassword123!")
+        print(f"ID:       {user_id}\n")
+        
+        print("--- CUENTA DE SUPERVISOR ---")
+        print(f"Email:    {sup_email}")
+        print("Password: SecurePassword123!")
+        print(f"ID:       {sup_id}")
         print("="*60)
         
     except Exception as e:

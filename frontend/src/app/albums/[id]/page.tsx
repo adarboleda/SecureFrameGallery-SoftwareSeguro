@@ -24,48 +24,55 @@ export default function AlbumWorkspace({ params }: { params: Promise<{ id: strin
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const [uploadMessage, setUploadMessage] = useState<{text: string; ok: boolean} | null>(null);
+
+  const loadFiles = async (uid: string) => {
+    try {
+      const data = await fetch(`http://localhost:8000/api/public/albums/${albumId}/my-files?user_id=${uid}`);
+      const json = await data.json();
+      setFiles(json.files || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     async function loadUser() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+      if (!user) { router.push("/login"); return; }
       setUserId(user.id);
+      loadFiles(user.id);
     }
     loadUser();
-  }, [router]);
-
-  useEffect(() => {
-    async function loadFiles() {
-      try {
-        const data = await fileService.getPublicFiles(albumId);
-        setFiles(data.files || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadFiles();
-  }, [albumId]);
+  }, [router, albumId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
 
     setUploading(true);
+    setUploadMessage(null);
     try {
-      await fileService.uploadSecureFile(file, userId, albumId);
-      // Reload files after upload
-      const data = await fileService.getPublicFiles(albumId);
-      setFiles(data.files || []);
+      const result = await fileService.uploadSecureFile(file, userId, albumId);
+      const msg = result?.status === "quarantined"
+        ? "Archivo subido. Está en cuarentena por análisis de seguridad."
+        : "¡Archivo subido exitosamente! Está limpio y visible."
+      setUploadMessage({ text: msg, ok: result?.status !== "quarantined" });
+      await loadFiles(userId);
     } catch (err: any) {
-      alert("Error subiendo el archivo: " + err.message);
+      setUploadMessage({ text: "Error al subir: " + (err.message || "Error desconocido"), ok: false });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setTimeout(() => setUploadMessage(null), 5000);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
   };
 
   return (
@@ -79,8 +86,8 @@ export default function AlbumWorkspace({ params }: { params: Promise<{ id: strin
             </button>
           </Link>
           <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter font-display-lg">SecureFrame</h1>
-          <button className="hover:bg-zinc-100 transition-colors duration-200 active:scale-95 transition-transform rounded-full w-10 h-10 overflow-hidden flex items-center justify-center bg-tonal cursor-pointer">
-            <span className="material-symbols-outlined">person</span>
+          <button onClick={handleLogout} className="hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 active:scale-95 transition-transform rounded-full w-10 h-10 overflow-hidden flex items-center justify-center bg-tonal cursor-pointer" title="Cerrar sesión">
+            <span className="material-symbols-outlined">logout</span>
           </button>
         </div>
       </header>
@@ -115,40 +122,63 @@ export default function AlbumWorkspace({ params }: { params: Promise<{ id: strin
         </section>
 
         {/* Masonry Grid */}
-        <section className="masonry-grid">
+        <section>
+          {/* Upload feedback toast */}
+          {uploadMessage && (
+            <div className={`mb-6 flex items-center gap-3 px-5 py-4 rounded-2xl font-body-md text-body-md ${
+              uploadMessage.ok ? "bg-green-50 text-green-800 border border-green-200" : "bg-amber-50 text-amber-800 border border-amber-200"
+            }`}>
+              <span className="material-symbols-outlined text-[20px]">{uploadMessage.ok ? "check_circle" : "warning"}</span>
+              {uploadMessage.text}
+            </div>
+          )}
           {loading ? (
-             <div className="col-span-full py-20 flex justify-center">
-               <span className="material-symbols-outlined animate-spin text-primary">refresh</span>
-             </div>
+            <div className="py-20 flex flex-col items-center gap-4 text-secondary">
+              <span className="material-symbols-outlined animate-spin text-4xl">refresh</span>
+              <p className="font-body-md">Cargando archivos...</p>
+            </div>
           ) : files.length === 0 ? (
-             <div className="col-span-full py-20 text-center border-2 border-dashed border-outline-variant rounded-[32px] text-secondary">
-               <span className="material-symbols-outlined text-4xl mb-2">cloud_upload</span>
-               <p>Aún no hay archivos subidos.</p>
-             </div>
+            <div className="py-24 flex flex-col items-center gap-4 border-2 border-dashed border-outline-variant rounded-3xl text-on-surface-variant">
+              <span className="material-symbols-outlined text-6xl opacity-30">cloud_upload</span>
+              <p className="font-headline-sm text-headline-sm">Aún no hay archivos subidos</p>
+              <p className="font-body-md text-body-md opacity-70 text-center max-w-xs">Haz clic en "Subir Archivo" para agregar imágenes o PDFs a este álbum.</p>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || !userId}
+                className="mt-2 bg-primary-container text-white px-6 py-3 rounded-full font-label-md text-label-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[18px]">upload</span>
+                Subir primer archivo
+              </button>
+            </div>
           ) : (
-            files.map((file) => (
-              <div key={file.id} className="masonry-item group cursor-pointer relative">
-                <div className="rounded-[32px] overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300">
-                  {file.type === "pdf" ? (
-                    <iframe src={`${file.url}#view=FitH&toolbar=0&navpanes=0`} className="w-full h-96 border-0" title="PDF Preview"></iframe>
-                  ) : (
-                    <img 
-                      src={file.url} 
-                      alt="Album media" 
-                      className="w-full h-auto object-cover" 
-                    />
-                  )}
-                  
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-                    <button className="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm pointer-events-auto cursor-pointer">Ver</button>
+            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 space-y-5 mt-6">
+              {files.map((file) => (
+                <div key={file.id} className="break-inside-avoid group cursor-pointer relative">
+                  <div className="rounded-2xl overflow-hidden relative shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.1)] transition-all duration-300 bg-surface-container">
+                    {file.type === "pdf" ? (
+                      <div className="w-full h-48 flex items-center justify-center bg-surface-container">
+                        <span className="material-symbols-outlined text-6xl text-secondary opacity-40">picture_as_pdf</span>
+                      </div>
+                    ) : (
+                      <img src={file.url} alt="Album media" className="w-full h-auto object-cover" />
+                    )}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+                      <button className="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-sm pointer-events-auto cursor-pointer">Ver</button>
+                    </div>
+                  </div>
+                  <div className="mt-2 px-1 flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${
+                      file.status === 'clean' ? 'bg-green-500' : 
+                      file.status === 'quarantined' ? 'bg-red-500' : 'bg-yellow-500'
+                    }`}></span>
+                    <p className="font-label-sm text-label-sm text-on-surface-variant">
+                      {file.status === 'clean' ? 'Limpio' : file.status === 'quarantined' ? 'En cuarentena' : 'Procesando'}
+                    </p>
                   </div>
                 </div>
-                <div className="mt-2 px-2 flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${file.status === 'clean' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                  <p className="font-label-md text-label-md text-on-surface capitalize">{file.status === 'clean' ? 'Limpio' : file.status === 'pending' ? 'Pendiente' : file.status}</p>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </section>
       </main>

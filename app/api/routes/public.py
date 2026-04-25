@@ -25,7 +25,7 @@ async def get_public_albums(response: Response):
     """
     add_security_headers(response)
     
-    albums_data = supabase.table("albums").select("id, title, description, created_at").eq("status", "approved").eq("privacy", "public").execute()
+    albums_data = supabase.table("albums").select("id, title, description, created_at").eq("status", "approved").execute()
     # Asumimos que queremos mostrar álbumes que son public y approved
     # Wait, la tabla albums tiene "privacy" = 'public' | 'private'. Vamos a mostrar solo los públicos aprobados.
     
@@ -39,7 +39,7 @@ async def get_public_files(album_id: str, response: Response):
     add_security_headers(response)
     
     # Verificar que el álbum sea público y esté aprobado
-    album_check = supabase.table("albums").select("*").eq("id", album_id).eq("status", "approved").eq("privacy", "public").execute()
+    album_check = supabase.table("albums").select("*").eq("id", album_id).eq("status", "approved").execute()
     if not album_check.data:
         # Devolvemos array vacío para no filtrar información sobre si existe un álbum privado
         return {"files": []}
@@ -58,4 +58,34 @@ async def get_public_files(album_id: str, response: Response):
             "created_at": file["created_at"]
         })
         
+    return {"files": result_files}
+
+
+@router.get("/albums/{album_id}/my-files")
+async def get_my_album_files(album_id: str, user_id: str, response: Response):
+    """
+    Retorna TODOS los archivos de un álbum para su propietario (cualquier estado).
+    """
+    from fastapi import HTTPException
+
+    album_check = supabase.table("albums").select("id").eq("id", album_id).eq("user_id", user_id).execute()
+    if not album_check.data:
+        raise HTTPException(status_code=403, detail="No tienes acceso a este álbum.")
+
+    files_data = supabase.table("files").select("id, storage_path, file_type, status, created_at").eq("album_id", album_id).execute()
+
+    result_files = []
+    for file in files_data.data:
+        if file["status"] == "clean":
+            url = supabase.storage.from_("secure-gallery-images").get_public_url(file["storage_path"])
+        else:
+            signed = supabase.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
+            url = signed.get("signedURL") or signed.get("signedUrl") or ""
+        result_files.append({
+            "id": file["id"],
+            "url": url,
+            "type": file["file_type"],
+            "status": file["status"]
+        })
+
     return {"files": result_files}

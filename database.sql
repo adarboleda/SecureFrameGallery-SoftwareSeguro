@@ -5,14 +5,17 @@
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
-DROP TABLE IF EXISTS public.images CASCADE;
+DROP TABLE IF EXISTS public.files CASCADE;
+DROP TABLE IF EXISTS public.images CASCADE; -- Por si quedó la tabla vieja
 DROP TABLE IF EXISTS public.albums CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 
 DROP TYPE IF EXISTS user_role CASCADE;
 DROP TYPE IF EXISTS album_status CASCADE;
 DROP TYPE IF EXISTS album_privacy CASCADE;
-DROP TYPE IF EXISTS image_status CASCADE;
+DROP TYPE IF EXISTS image_status CASCADE; -- Borra el tipo viejo
+DROP TYPE IF EXISTS file_status CASCADE;  -- Borra el tipo nuevo para poder recrearlo
+
 -- ==========================================
 -- 1. TIPOS DE DATOS PERSONALIZADOS (ENUMS)
 -- Previenen inyección de estados inválidos
@@ -27,7 +30,6 @@ CREATE TYPE file_status AS ENUM ('processing', 'clean', 'quarantined', 'rejected
 -- ==========================================
 
 -- Tabla Profiles: Extiende la tabla nativa auth.users de Supabase
--- [Requisito RF01: Autenticación Segura y Roles]
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     role user_role DEFAULT 'user' NOT NULL,
@@ -35,37 +37,32 @@ CREATE TABLE public.profiles (
 );
 
 -- Tabla Albums: Gestión de las colecciones de los usuarios
--- [Requisito RF02: Gestión de Álbumes - Título, Descripción, Privacidad, Estado]
 CREATE TABLE public.albums (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     privacy album_privacy DEFAULT 'private' NOT NULL,
-    status album_status DEFAULT 'pending' NOT NULL, -- "Pendiente de Revisión" por defecto
+    status album_status DEFAULT 'pending' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Tabla Files: El núcleo del proyecto y la cuarentena (soporta imágenes y PDFs)
--- [Requisito RF03 y RF04: Detección y Revisión Manual]
 CREATE TABLE public.files (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     album_id UUID REFERENCES public.albums(id) ON DELETE CASCADE NOT NULL,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-    storage_path TEXT NOT NULL, -- La ruta física en el Bucket de Supabase Storage
-    file_type TEXT DEFAULT 'image' NOT NULL, -- 'image' o 'pdf'
-    status file_status DEFAULT 'processing' NOT NULL, -- Pasa a 'clean' o 'quarantined' tras el análisis Python
-    analysis_metadata JSONB, -- Almacena los resultados del análisis (LSB/Chi-Square/PDF JS)
+    storage_path TEXT NOT NULL,
+    file_type TEXT DEFAULT 'image' NOT NULL,
+    status file_status DEFAULT 'processing' NOT NULL,
+    analysis_metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ==========================================
 -- 3. AUTOMATIZACIÓN DE SEGURIDAD (TRIGGER)
 -- ==========================================
-
--- Esta función crea un perfil automáticamente con rol 'user' cada vez que 
--- alguien se registra en el sistema de autenticación de Supabase.
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
