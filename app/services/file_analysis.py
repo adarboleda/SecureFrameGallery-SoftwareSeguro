@@ -59,16 +59,16 @@ def analyze_image_steganography(img: Image.Image) -> dict:
 
 def analyze_pdf_security(file_bytes: bytes) -> dict:
     """
-    Analiza un PDF en busca de patrones maliciosos reales:
-    - JavaScript embebido en enlaces o formularios
-    - Archivos embebidos ocultos
-    Un PDF exportado normalmente desde Word/LibreOffice NO debe ser marcado.
+    Analiza un PDF en busca de patrones maliciosos reales.
+    Optimizado para evitar Falsos Positivos de archivos exportados desde MS Word/LibreOffice.
     """
     is_suspicious = False
     details = []
     
     try:
-        doc = fitz.open("pdf", file_bytes)
+        # CORRECCIÓN 1: Sintaxis explícita y segura para leer bytes desde la memoria RAM.
+        # Evita el error de "cannot open file 'pdf'"
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
         
         # 1. Buscar JavaScript en enlaces
         for page_num in range(len(doc)):
@@ -90,9 +90,9 @@ def analyze_pdf_security(file_bytes: bytes) -> dict:
                             is_suspicious = True
                             details.append(f"JavaScript en widget (Formulario) detectado en la página {page_num+1}.")
             except Exception:
-                pass  # Algunos PDFs sin formularios lanzan excepción, no es señal de riesgo
+                pass  # Ignoramos fallos al leer widgets
                     
-        # 3. Archivos embebidos ocultos (adjuntos que no se ven normalmente)
+        # 3. Archivos embebidos ocultos
         if doc.embedded_file_count() > 0:
             is_suspicious = True
             details.append(f"El PDF contiene {doc.embedded_file_count()} archivo(s) oculto(s) embebido(s).")
@@ -100,13 +100,15 @@ def analyze_pdf_security(file_bytes: bytes) -> dict:
         doc.close()
         
     except Exception as e:
-        # Solo flaggear si el error parece intencional (estructura truncada, no si es error de librería)
         error_msg = str(e).lower()
-        if any(kw in error_msg for kw in ["encrypted", "malformed", "invalid xref", "cannot open"]):
+        
+        # CORRECCIÓN 2: Eliminamos "cannot open" y "invalid xref" de la lista negra.
+        # Solo marcaremos como ataque si el archivo está encriptado (protegido con contraseña) 
+        # o catastróficamente malformado (evidencia de manipulación hexadecimal directa).
+        if any(kw in error_msg for kw in ["encrypted", "malformed"]):
             is_suspicious = True
             details.append(f"Estructura del PDF potencialmente manipulada: {str(e)}")
-        # Si es otro tipo de error (e.g. codec, font), NO marcar como sospechoso
-        
+            
     return {
         "is_suspicious": bool(is_suspicious),
         "pdf_details": details
