@@ -16,11 +16,11 @@ def setup_test_environment():
     try:
         # 1. Crear un Usuario Normal
         print("1. Creando usuario normal de prueba...")
-        user_email = f"user_{uuid.uuid4().hex[:6]}@securegallery.com"
+        user_email = f"user1@securegallery.com"
         
         user_res = supabase.auth.admin.create_user({
             "email": user_email,
-            "password": "SecurePassword123!",
+            "password": "user123",
             "email_confirm": True
         })
         user_id = user_res.user.id
@@ -28,10 +28,10 @@ def setup_test_environment():
         
         # 2. Crear un Supervisor
         print("\n2. Creando usuario supervisor...")
-        sup_email = f"admin_{uuid.uuid4().hex[:6]}@securegallery.com"
+        sup_email = f"admin1@securegallery.com"
         sup_res = supabase.auth.admin.create_user({
             "email": sup_email,
-            "password": "SecurePassword123!",
+            "password": "admin123",
             "email_confirm": True
         })
         sup_id = sup_res.user.id
@@ -40,29 +40,6 @@ def setup_test_environment():
         # Actualizar rol a supervisor
         supabase.table("profiles").update({"role": "supervisor"}).eq("id", sup_id).execute()
         print("   [Éxito] Rol actualizado a 'supervisor' en la DB.")
-
-        # 3. Crear un Álbum para el Usuario Normal
-        print("\n3. Creando álbum de prueba...")
-        album_response = supabase.table("albums").insert({
-            "user_id": user_id,
-            "title": "Archivos Pendientes Demo",
-            "description": "Álbum generado con archivos de prueba."
-        }).execute()
-        
-        album_id = album_response.data[0]['id']
-        print(f"   [Éxito] Álbum creado.")
-        
-        # 4. Crear un Archivo en Cuarentena
-        print("\n4. Creando archivo en cuarentena...")
-        file_response = supabase.table("files").insert({
-            "album_id": album_id,
-            "user_id": user_id,
-            "storage_path": "quarantine/test_image.png",
-            "file_type": "image",
-            "status": "quarantined",
-            "analysis_metadata": {"stego_entropy": 95.4, "stego_detected": True}
-        }).execute()
-        print("   [Éxito] Archivo en cuarentena insertado en la base de datos.")
         
         # 5. Verificando Bucket
         print("\n5. Verificando Bucket de imágenes...")
@@ -87,12 +64,12 @@ def setup_test_environment():
         print("Puedes iniciar sesión en el Frontend con las siguientes cuentas:\n")
         print("--- CUENTA DE USUARIO NORMAL ---")
         print(f"Email:    {user_email}")
-        print("Password: SecurePassword123!")
+        print("Password: user123")
         print(f"ID:       {user_id}\n")
         
         print("--- CUENTA DE SUPERVISOR ---")
         print(f"Email:    {sup_email}")
-        print("Password: SecurePassword123!")
+        print("Password: admin123")
         print(f"ID:       {sup_id}")
         print("="*60)
         
