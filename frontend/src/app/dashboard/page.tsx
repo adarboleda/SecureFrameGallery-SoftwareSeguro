@@ -56,14 +56,20 @@ export default function Dashboard() {
     async function loadAlbums() {
       if (!userId) return;
       try {
-        const data = await albumService.getMyAlbums(userId);
-        const rawAlbums: Album[] = data || [];
+        const albumsData = await albumService.getMyAlbums(userId);
+        const rawAlbums: Album[] = albumsData || [];
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
 
         const enriched = await Promise.all(
           rawAlbums.map(async (album) => {
             try {
               const res = await fetch(
-                `http://localhost:8000/api/public/albums/${album.id}/my-files?user_id=${userId}`
+                `http://localhost:8000/api/public/albums/${album.id}/my-files?user_id=${userId}`,
+                {
+                  headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                }
               );
               if (!res.ok) return { ...album, preview_url: null };
               const json = await res.json();

@@ -1,4 +1,5 @@
 import { env } from "@/config/env";
+import { supabase } from "@/lib/supabase";
 
 export const API_BASE_URL = env.NEXT_PUBLIC_API_URL;
 
@@ -11,6 +12,14 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
+  }
+
+  if (!headers.has("Authorization")) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
   }
 
   console.log(`[apiFetch] Intentando conectar a: ${url}`);

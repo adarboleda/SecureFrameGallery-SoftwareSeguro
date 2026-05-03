@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, Request
 from app.services.supabase_client import supabase
+from app.core.security import get_authenticated_user, get_user_id
 
 router = APIRouter()
 
@@ -104,13 +105,19 @@ async def get_public_files(album_id: str, response: Response):
 
 
 @router.get("/albums/{album_id}/my-files")
-async def get_my_album_files(album_id: str, user_id: str, response: Response):
+async def get_my_album_files(request: Request, album_id: str, user_id: str | None, response: Response):
     """
     Retorna TODOS los archivos de un álbum para su propietario (cualquier estado).
     """
     from fastapi import HTTPException
 
-    album_check = supabase.table("albums").select("id").eq("id", album_id).eq("user_id", user_id).execute()
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+
+    if user_id and user_id != auth_user_id:
+        raise HTTPException(status_code=403, detail="User mismatch.")
+
+    album_check = supabase.table("albums").select("id").eq("id", album_id).eq("user_id", auth_user_id).execute()
     if not album_check.data:
         raise HTTPException(status_code=403, detail="No tienes acceso a este álbum.")
 

@@ -7,7 +7,7 @@
 
 ## Falta / Riesgo
 ### Alto
-- Los endpoints de cuarentena confian en `supervisor_id` enviado por el cliente sin validar sesion/JWT. Un usuario podria falsificar el ID si conoce uno valido. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L26).
+- (Resuelto) Los endpoints de cuarentena validan JWT y usan el `supervisor_id` del token. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L1).
 
 ### Medio
 - La vista de supervisor no muestra los metadatos del analisis (detalles LSB/chi/DCT o pdf_details). El requisito pide ver el "por que" fue marcado. Ver [frontend/src/app/supervisor/page.tsx](frontend/src/app/supervisor/page.tsx#L240) y [app/services/file_analysis.py](app/services/file_analysis.py#L1).

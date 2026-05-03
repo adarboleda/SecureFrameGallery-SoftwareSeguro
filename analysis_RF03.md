@@ -10,7 +10,7 @@
 
 ## Falta / Riesgo
 ### Alto
-- La ruta de subida recibe `user_id` desde el cliente sin validacion de sesion/JWT. Un atacante podria subir a album de otro si conoce IDs (aunque se valida album_id+user_id). Ver [app/api/routes/files.py](app/api/routes/files.py#L33).
+- (Resuelto) La subida valida JWT y usa el `user_id` del token. Ver [app/api/routes/files.py](app/api/routes/files.py#L1).
 
 ### Medio
 - El analisis estructural no valida marcadores JPEG internos (APPx, SOS, tamaños) ni CRC de chunks PNG; solo verifica cabecera/EOF. Puede pasar por alto ciertos payloads en chunks validos. Ver [app/services/file_analysis.py](app/services/file_analysis.py#L49).

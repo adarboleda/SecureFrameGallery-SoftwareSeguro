@@ -3,10 +3,11 @@ try:
     import magic
 except Exception:  # pragma: no cover - optional dependency on Windows
     magic = None
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 from PIL import Image
 from app.services.supabase_client import supabase
 from app.services.file_analysis import analyze_image_steganography, analyze_pdf_security, strip_exif, verify_image_structure
+from app.core.security import get_authenticated_user, get_user_id
 
 router = APIRouter()
 
@@ -32,7 +33,14 @@ def get_mime_type(contents: bytes) -> str:
     return kind.mime
 
 @router.post("/upload")
-async def upload_secure_file(file: UploadFile = File(...), user_id: str = Form("demo-user-id"), album_id: str = Form("demo-album-id")):
+async def upload_secure_file(request: Request, file: UploadFile = File(...), user_id: str = Form("demo-user-id"), album_id: str = Form("demo-album-id")):
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+
+    if user_id and user_id != auth_user_id:
+        raise HTTPException(status_code=403, detail="User mismatch.")
+
+    user_id = auth_user_id
     # VERIFICACIÓN PREVIA (RF03): Validar que el álbum esté aprobado
     album_check = supabase.table("albums").select("status").eq("id", album_id).eq("user_id", user_id).execute()
     if not album_check.data:

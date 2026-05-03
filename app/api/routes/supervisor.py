@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.models.schemas import Decision
 from app.services.supabase_client import supabase
+from app.core.security import get_authenticated_user, get_user_id
 
 router = APIRouter()
 
@@ -8,8 +9,10 @@ router = APIRouter()
 # RF02: REVISIÓN DE ÁLBUMES (SUPERVISOR)
 # ==========================================
 @router.get("/albums")
-async def get_pending_albums(supervisor_id: str):
-    user_profile = supabase.table("profiles").select("role").eq("id", supervisor_id).execute()
+async def get_pending_albums(request: Request, supervisor_id: str | None = None):
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+    user_profile = supabase.table("profiles").select("role").eq("id", auth_user_id).execute()
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
         
@@ -17,8 +20,10 @@ async def get_pending_albums(supervisor_id: str):
     return {"pending_albums": pending_albums.data}
 
 @router.patch("/albums/{album_id}")
-async def resolve_album(album_id: str, decision: Decision):
-    user_profile = supabase.table("profiles").select("role").eq("id", decision.supervisor_id).execute()
+async def resolve_album(request: Request, album_id: str, decision: Decision):
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+    user_profile = supabase.table("profiles").select("role").eq("id", auth_user_id).execute()
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
         
@@ -31,11 +36,13 @@ async def resolve_album(album_id: str, decision: Decision):
 # RF04: FLUJO DE REVISIÓN MANUAL (SUPERVISOR)
 # ==========================================
 @router.get("/quarantine")
-async def get_quarantined_files(supervisor_id: str):
+async def get_quarantined_files(request: Request, supervisor_id: str | None = None):
     """
     Obtiene la lista de archivos retenidos por los algoritmos de análisis.
     """
-    user_profile = supabase.table("profiles").select("role").eq("id", supervisor_id).execute()
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+    user_profile = supabase.table("profiles").select("role").eq("id", auth_user_id).execute()
     
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
@@ -45,11 +52,13 @@ async def get_quarantined_files(supervisor_id: str):
     return {"quarantined_files": quarantine_data.data}
 
 @router.patch("/quarantine/{file_id}")
-async def resolve_quarantine(file_id: str, decision: Decision):
+async def resolve_quarantine(request: Request, file_id: str, decision: Decision):
     """
     El supervisor aprueba o rechaza el archivo.
     """
-    user_profile = supabase.table("profiles").select("role").eq("id", decision.supervisor_id).execute()
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+    user_profile = supabase.table("profiles").select("role").eq("id", auth_user_id).execute()
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
     

@@ -9,7 +9,7 @@
 
 ## Falta / Riesgo
 ### Alto
-- El backend confia en `user_id` enviado por el cliente sin validacion de sesion/JWT. Un usuario podria solicitar albumes a nombre de otro. Ver [app/api/routes/albums.py](app/api/routes/albums.py#L15).
+- (Resuelto) El backend ahora valida el JWT y usa el `user_id` del token. Ver [app/api/routes/albums.py](app/api/routes/albums.py#L1).
 
 ### Medio
 - No hay validacion de longitud/formato en backend para `title/description/privacy` mas alla de `bleach`. Si el frontend se salta, pueden entrar datos fuera de rango. Ver [app/models/schemas.py](app/models/schemas.py#L16) y [app/api/routes/albums.py](app/api/routes/albums.py#L15).

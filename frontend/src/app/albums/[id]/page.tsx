@@ -26,8 +26,13 @@ export default function AlbumWorkspace({ params }: { params: Promise<{ id: strin
 
   const loadFiles = useCallback(async (uid: string, aid: string) => {
     try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
       const res = await fetch(
-        `http://localhost:8000/api/public/albums/${aid}/my-files?user_id=${uid}`
+        `http://localhost:8000/api/public/albums/${aid}/my-files?user_id=${uid}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
       );
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const json = await res.json();
