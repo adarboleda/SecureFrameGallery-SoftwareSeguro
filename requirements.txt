@@ -5,8 +5,8 @@ supabase
 passlib[argon2]
 bleach
 slowapi
-python-magic
 python-magic-bin
+filetype
 pillow
 numpy
 scipy

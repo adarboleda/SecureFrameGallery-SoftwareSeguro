@@ -1,5 +1,8 @@
 import io
-import magic
+try:
+    import magic
+except Exception:  # pragma: no cover - optional dependency on Windows
+    magic = None
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from PIL import Image
 from app.services.supabase_client import supabase
@@ -8,6 +11,25 @@ from app.services.file_analysis import analyze_image_steganography, analyze_pdf_
 router = APIRouter()
 
 MAX_FILE_SIZE = 10 * 1024 * 1024 # Aumentado a 10MB para PDFs
+
+
+def get_mime_type(contents: bytes) -> str:
+    if magic is not None and hasattr(magic, "from_buffer"):
+        return magic.from_buffer(contents, mime=True)
+
+    if magic is not None and hasattr(magic, "Magic"):
+        return magic.Magic(mime=True).from_buffer(contents)
+
+    try:
+        import filetype
+    except Exception as exc:
+        raise RuntimeError("python-magic no disponible o incompatible") from exc
+
+    kind = filetype.guess(contents)
+    if not kind:
+        raise RuntimeError("No se pudo detectar el tipo de archivo")
+
+    return kind.mime
 
 @router.post("/upload")
 async def upload_secure_file(file: UploadFile = File(...), user_id: str = Form("demo-user-id"), album_id: str = Form("demo-album-id")):
@@ -25,7 +47,7 @@ async def upload_secure_file(file: UploadFile = File(...), user_id: str = Form("
         raise HTTPException(status_code=400, detail="File exceeds 10MB limit.")
         
     # CONTROL DE SEGURIDAD 2: File Magic Numbers
-    mime_type = magic.from_buffer(contents, mime=True)
+    mime_type = get_mime_type(contents)
     if mime_type not in ["image/jpeg", "image/png", "application/pdf"]:
         raise HTTPException(status_code=400, detail="Invalid file signature. Only JPEG, PNG or PDF allowed.")
         
