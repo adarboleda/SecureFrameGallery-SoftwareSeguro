@@ -25,9 +25,7 @@ async def get_public_albums(response: Response):
     """
     add_security_headers(response)
     
-    albums_data = supabase.table("albums").select("id, title, description, created_at").eq("status", "approved").execute()
-    # Asumimos que queremos mostrar álbumes que son public y approved
-    # Wait, la tabla albums tiene "privacy" = 'public' | 'private'. Vamos a mostrar solo los públicos aprobados.
+    albums_data = supabase.table("albums").select("id, title, description, created_at").eq("status", "approved").eq("privacy", "public").execute()
     
     return {"albums": albums_data.data}
 

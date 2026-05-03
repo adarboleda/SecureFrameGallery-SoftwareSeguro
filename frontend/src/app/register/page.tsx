@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
+import { registerSchema } from '@/schemas/auth.schema';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -11,14 +12,23 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+    // RF01: Validación de política de contraseñas robustas (Zod)
+    const validation = registerSchema.safeParse({ username, email, password, confirmPassword });
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        const field = err.path[0] as string;
+        if (!errors[field]) errors[field] = err.message;
+      });
+      setFieldErrors(errors);
       return;
     }
 
@@ -81,6 +91,7 @@ export default function Register() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
+            {fieldErrors.username && <p className="text-red-500 text-xs mt-1 px-4">{fieldErrors.username}</p>}
           </div>
           <div className="relative">
             <input
@@ -92,6 +103,7 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+            {fieldErrors.email && <p className="text-red-500 text-xs mt-1 px-4">{fieldErrors.email}</p>}
           </div>
           <div className="relative">
             <input
@@ -103,6 +115,8 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            {fieldErrors.password && <p className="text-red-500 text-xs mt-1 px-4">{fieldErrors.password}</p>}
+            <p className="text-xs text-secondary mt-1 px-4">Mín. 8 caracteres, 1 mayúscula, 1 número, 1 especial (!@#$%)</p>
           </div>
           <div className="relative">
             <input
@@ -114,6 +128,7 @@ export default function Register() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
+            {fieldErrors.confirmPassword && <p className="text-red-500 text-xs mt-1 px-4">{fieldErrors.confirmPassword}</p>}
           </div>
 
           {error && (

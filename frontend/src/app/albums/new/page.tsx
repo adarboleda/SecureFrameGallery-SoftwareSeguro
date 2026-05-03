@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 export default function NewAlbum() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [privacy, setPrivacy] = useState<"public" | "private">("public");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
@@ -31,7 +32,7 @@ export default function NewAlbum() {
     if (!userId) return;
     setIsSubmitting(true);
     try {
-      await albumService.requestAlbum(userId, title, description);
+      await albumService.requestAlbum(userId, title, description, privacy);
       router.push("/dashboard");
     } catch (err) {
       console.error("Error al crear álbum", err);
@@ -85,6 +86,38 @@ export default function NewAlbum() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               ></textarea>
+            </div>
+            
+            {/* Privacy Selector (RF02: Privacidad inicial) */}
+            <div className="flex flex-col gap-sm">
+              <label className="font-label-md text-label-md text-on-surface ml-unit">Privacidad</label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPrivacy("public")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer ${
+                    privacy === "public"
+                      ? "bg-primary-container text-on-primary-container shadow-sm"
+                      : "bg-secondary-fixed text-on-secondary-container hover:bg-secondary-fixed-dim"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]" style={{fontVariationSettings: privacy === "public" ? "'FILL' 1" : "'FILL' 0"}}>public</span>
+                  Público
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrivacy("private")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer ${
+                    privacy === "private"
+                      ? "bg-primary-container text-on-primary-container shadow-sm"
+                      : "bg-secondary-fixed text-on-secondary-container hover:bg-secondary-fixed-dim"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]" style={{fontVariationSettings: privacy === "private" ? "'FILL' 1" : "'FILL' 0"}}>lock</span>
+                  Privado
+                </button>
+              </div>
+              <p className="text-xs text-secondary px-unit">Los álbumes públicos serán visibles en la galería tras la aprobación. Los privados solo serán visibles para ti.</p>
             </div>
             
             {/* Actions */}

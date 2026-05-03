@@ -32,6 +32,7 @@ async def request_album(request: Request, album: AlbumCreate):
         "user_id": album.user_id,
         "title": clean_title,
         "description": clean_description,
+        "privacy": album.privacy,
         "status": "pending"
     }).execute()
     

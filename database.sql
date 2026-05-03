@@ -88,3 +88,105 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authentic
 
 -- Otorgar permisos a las secuencias (para los IDs auto incrementales si los hay)
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+-- ==========================================
+-- 5. POLITICAS RLS (Row Level Security)
+-- ==========================================
+
+-- Profiles: cada usuario solo puede leer su propio perfil
+CREATE POLICY "profiles_select_own"
+ON public.profiles
+FOR SELECT
+TO authenticated
+USING (auth.uid() = id);
+
+-- Albums: el usuario puede crear y leer sus propios albumes
+CREATE POLICY "albums_insert_own"
+ON public.albums
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "albums_select_own"
+ON public.albums
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+-- Albums: lectura publica de albumes aprobados y publicos
+CREATE POLICY "albums_select_public"
+ON public.albums
+FOR SELECT
+TO anon
+USING (status = 'approved' AND privacy = 'public');
+
+-- Albums: supervisor puede leer y actualizar todo
+CREATE POLICY "albums_supervisor_select"
+ON public.albums
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+);
+
+CREATE POLICY "albums_supervisor_update"
+ON public.albums
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+);
+
+-- Files: el usuario puede insertar y leer sus propios archivos
+CREATE POLICY "files_insert_own"
+ON public.files
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "files_select_own"
+ON public.files
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+-- Files: supervisor puede leer y actualizar todo
+CREATE POLICY "files_supervisor_select"
+ON public.files
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+);
+
+CREATE POLICY "files_supervisor_update"
+ON public.files
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+);

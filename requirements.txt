@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+supabase
+passlib[argon2]
+bleach
+slowapi
+python-magic
+python-magic-bin
+pillow
+numpy
+scipy
+pymupdf
+python-multipart

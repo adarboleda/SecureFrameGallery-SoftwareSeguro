@@ -12,13 +12,14 @@ export const albumService = {
     return await apiFetch(`/api/albums/my?user_id=${userId}`);
   },
 
-  async requestAlbum(userId: string, title: string, description: string) {
+  async requestAlbum(userId: string, title: string, description: string, privacy: string = "public") {
     return await apiFetch("/api/albums/request", {
       method: "POST",
       body: JSON.stringify({
         user_id: userId,
         title,
-        description
+        description,
+        privacy
       })
     });
   },
