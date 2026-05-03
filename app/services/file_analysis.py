@@ -57,6 +57,63 @@ def analyze_image_steganography(img: Image.Image) -> dict:
         }
     }
 
+
+def verify_image_structure(file_bytes: bytes, mime_type: str) -> dict:
+    if mime_type == "image/jpeg":
+        return _check_jpeg_structure(file_bytes)
+    if mime_type == "image/png":
+        return _check_png_structure(file_bytes)
+
+    return {"ok": True, "details": "unsupported"}
+
+
+def _check_jpeg_structure(file_bytes: bytes) -> dict:
+    if not file_bytes.startswith(b"\xFF\xD8"):
+        return {"ok": False, "details": "jpeg_missing_soi"}
+
+    eoi_index = file_bytes.rfind(b"\xFF\xD9")
+    if eoi_index == -1:
+        return {"ok": False, "details": "jpeg_missing_eoi"}
+
+    trailing = file_bytes[eoi_index + 2 :]
+    if trailing.strip(b"\x00\x0A\x0D\x20\t"):
+        return {"ok": False, "details": "jpeg_trailing_data"}
+
+    return {"ok": True, "details": "jpeg_ok"}
+
+
+def _check_png_structure(file_bytes: bytes) -> dict:
+    signature = b"\x89PNG\r\n\x1a\n"
+    if not file_bytes.startswith(signature):
+        return {"ok": False, "details": "png_missing_signature"}
+
+    offset = len(signature)
+    found_iend = False
+    data_len = len(file_bytes)
+    while offset + 12 <= data_len:
+        length = int.from_bytes(file_bytes[offset : offset + 4], "big")
+        chunk_type = file_bytes[offset + 4 : offset + 8]
+        offset += 8
+
+        if offset + length + 4 > data_len:
+            return {"ok": False, "details": "png_chunk_overflow"}
+
+        offset += length
+        offset += 4  # CRC
+
+        if chunk_type == b"IEND":
+            found_iend = True
+            break
+
+    if not found_iend:
+        return {"ok": False, "details": "png_missing_iend"}
+
+    trailing = file_bytes[offset:]
+    if trailing.strip(b"\x00\x0A\x0D\x20\t"):
+        return {"ok": False, "details": "png_trailing_data"}
+
+    return {"ok": True, "details": "png_ok"}
+
 def analyze_pdf_security(file_bytes: bytes) -> dict:
     """
     Analiza un PDF en busca de patrones maliciosos reales.

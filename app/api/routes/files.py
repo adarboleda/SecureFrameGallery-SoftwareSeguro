@@ -6,7 +6,7 @@ except Exception:  # pragma: no cover - optional dependency on Windows
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from PIL import Image
 from app.services.supabase_client import supabase
-from app.services.file_analysis import analyze_image_steganography, analyze_pdf_security, strip_exif
+from app.services.file_analysis import analyze_image_steganography, analyze_pdf_security, strip_exif, verify_image_structure
 
 router = APIRouter()
 
@@ -54,6 +54,14 @@ async def upload_secure_file(file: UploadFile = File(...), user_id: str = Form("
     try:
         if mime_type in ["image/jpeg", "image/png"]:
             file_type = "image"
+
+            structure_check = verify_image_structure(contents, mime_type)
+            if not structure_check.get("ok", False):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid image structure: {structure_check.get('details', 'unknown')}"
+                )
+
             original_img = Image.open(io.BytesIO(contents))
             
             # CONTROL DE SEGURIDAD 3: EXIF Stripping

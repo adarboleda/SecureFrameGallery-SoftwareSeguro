@@ -12,7 +12,8 @@ def inyectar_esteganografia_lsb(ruta_entrada, ruta_salida):
     
     # 2. Atacamos el canal Rojo (que es el que tu Chi-Cuadrado vigila)
     # Apagamos el último bit original y le pegamos nuestro ruido malicioso
-    img_array[:,:,0] = (img_array[:,:,0] & ~1) | ruido
+    mask = np.uint8(0xFE)
+    img_array[:,:,0] = (img_array[:,:,0] & mask) | ruido
     
     # 3. Guardamos la imagen modificada en formato PNG (Lossless)
     # Si la guardas en JPG, la compresión destruirá el ataque.
