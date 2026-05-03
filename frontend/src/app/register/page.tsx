@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { supabase } from '@/lib/supabase';
 import { registerSchema } from '@/schemas/auth.schema';
+import { apiFetch } from '@/services/api';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -35,19 +35,14 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: username,
-          },
-        },
+      await apiFetch('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          password,
+          username,
+        }),
       });
-
-      if (error) {
-        throw error;
-      }
 
       window.location.href = '/login?registered=true';
     } catch (err: any) {

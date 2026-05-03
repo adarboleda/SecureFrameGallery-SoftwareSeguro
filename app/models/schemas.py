@@ -5,6 +5,7 @@ from pydantic import BaseModel, field_validator
 class UserRegister(BaseModel):
     email: str
     password: str
+    username: str | None = None
 
     # RF01: Política de contraseñas robustas (validación en backend)
     @field_validator("password")

@@ -8,7 +8,7 @@
 
 ## Falta / Riesgo
 ### Alto
-- El endpoint de registro del backend es solo una simulacion: no crea usuarios en Supabase ni almacena credenciales, asi que el control de hashing en backend no se aplica al registro real. Esto rompe la trazabilidad del requisito en el backend. Ver [app/api/routes/auth.py](app/api/routes/auth.py#L1).
+- (Resuelto) El registro ahora se realiza en el backend via Supabase Auth, por lo que la trazabilidad del hashing queda clara. Ver [app/api/routes/auth.py](app/api/routes/auth.py#L1) y [frontend/src/app/register/page.tsx](frontend/src/app/register/page.tsx#L1).
 
 ### Medio
 - No hay rate limiting para login ni proteccion explicita contra fuerza bruta en el flujo real (Supabase Auth desde el frontend). El limiter solo cubre el endpoint simulado de registro. Ver [frontend/src/app/login/page.tsx](frontend/src/app/login/page.tsx#L1) y [app/api/routes/auth.py](app/api/routes/auth.py#L1).
