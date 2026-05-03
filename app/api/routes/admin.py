@@ -14,8 +14,19 @@ async def list_users(supervisor_id: str):
     _require_supervisor(supervisor_id)
     
     users_list = supabase.auth.admin.list_users()
+    users = None
+    if hasattr(users_list, "users"):
+        users = users_list.users
+    elif isinstance(users_list, dict):
+        users = users_list.get("users")
+    elif isinstance(users_list, list):
+        users = users_list
+
+    if users is None:
+        raise HTTPException(status_code=500, detail="No se pudo obtener la lista de usuarios.")
+
     result = []
-    for u in users_list.users:
+    for u in users:
         profile = supabase.table("profiles").select("role").eq("id", u.id).execute()
         role = profile.data[0]["role"] if profile.data else "user"
         result.append({
