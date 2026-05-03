@@ -14,6 +14,24 @@ def add_security_headers(response: Response):
     # Bloquea la ejecución de scripts (previene XSS).
     response.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' https://*.supabase.co; script-src 'none'; object-src 'none';"
 
+
+def extract_signed_url(signed_response) -> str:
+    if hasattr(signed_response, "signed_url"):
+        return signed_response.signed_url or ""
+
+    if hasattr(signed_response, "data"):
+        data = signed_response.data or {}
+        if isinstance(data, dict):
+            return data.get("signedUrl") or data.get("signedURL") or ""
+
+    if isinstance(signed_response, dict):
+        if "data" in signed_response and isinstance(signed_response["data"], dict):
+            data = signed_response["data"]
+            return data.get("signedUrl") or data.get("signedURL") or ""
+        return signed_response.get("signedURL") or signed_response.get("signedUrl") or ""
+
+    return ""
+
 # ==========================================
 # RF05: VISUALIZACIÓN PÚBLICA SEGURA
 # ==========================================
@@ -25,9 +43,35 @@ async def get_public_albums(response: Response):
     """
     add_security_headers(response)
     
-    albums_data = supabase.table("albums").select("id, title, description, created_at").eq("status", "approved").eq("privacy", "public").execute()
-    
-    return {"albums": albums_data.data}
+    albums_data = supabase.table("albums").select("id, user_id, title, description, created_at").eq("status", "approved").eq("privacy", "public").execute()
+
+    result_albums = []
+    for album in albums_data.data:
+        owner_name = ""
+        try:
+            user_resp = supabase.auth.admin.get_user_by_id(album["user_id"])
+            if hasattr(user_resp, "user") and user_resp.user:
+                meta = user_resp.user.user_metadata or {}
+                owner_name = meta.get("username") or (user_resp.user.email or "")
+            elif isinstance(user_resp, dict):
+                user_data = user_resp.get("user") or {}
+                meta = user_data.get("user_metadata") or {}
+                owner_name = meta.get("username") or user_data.get("email") or ""
+        except Exception:
+            owner_name = ""
+
+        if owner_name and "@" in owner_name:
+            owner_name = owner_name.split("@")[0]
+
+        result_albums.append({
+            "id": album["id"],
+            "title": album["title"],
+            "description": album["description"],
+            "created_at": album["created_at"],
+            "owner_name": owner_name
+        })
+
+    return {"albums": result_albums}
 
 @router.get("/albums/{album_id}/files")
 async def get_public_files(album_id: str, response: Response):
@@ -74,24 +118,14 @@ async def get_my_album_files(album_id: str, user_id: str, response: Response):
 
     result_files = []
     for file in files_data.data:
-        # Always try public URL first (works if bucket is public)
         public_url = supabase.storage.from_("secure-gallery-images").get_public_url(file["storage_path"])
-        
-        if file["status"] != "clean":
-            # Also generate signed URL for private/quarantined files (300 seconds)
-            try:
-                signed_response = supabase.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
-                # supabase-py v2 returns object, v1 returns dict
-                if hasattr(signed_response, "signed_url"):
-                    signed_url = signed_response.signed_url
-                elif isinstance(signed_response, dict):
-                    signed_url = signed_response.get("signedURL") or signed_response.get("signedUrl") or ""
-                else:
-                    signed_url = ""
-                url = signed_url if signed_url else public_url
-            except Exception:
-                url = public_url
-        else:
+
+        # Try signed URL first (works for private buckets and quarantined files)
+        try:
+            signed_response = supabase.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
+            signed_url = extract_signed_url(signed_response)
+            url = signed_url if signed_url else public_url
+        except Exception:
             url = public_url
             
         result_files.append({

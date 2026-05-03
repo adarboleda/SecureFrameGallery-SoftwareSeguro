@@ -13,6 +13,7 @@ interface Album {
   description: string;
   created_at: string;
   preview_url?: string;   // primera imagen del álbum
+  owner_name?: string;
 }
 
 interface FileData {
@@ -165,6 +166,9 @@ export default function PublicGallery() {
             </button>
           </div>
           <h1 className="font-bold text-3xl text-on-background mb-1">{selectedAlbum.title}</h1>
+          {selectedAlbum.owner_name ? (
+            <p className="text-secondary mb-2">Por {selectedAlbum.owner_name}</p>
+          ) : null}
           {selectedAlbum.description && (
             <p className="text-secondary mb-8">{selectedAlbum.description}</p>
           )}
@@ -264,9 +268,12 @@ export default function PublicGallery() {
                     {/* Info */}
                     <div className="p-4">
                       <h2 className="font-bold text-base text-on-surface truncate mb-1">{album.title}</h2>
-                      {album.description && (
+                      {album.owner_name ? (
+                        <p className="font-body-sm text-body-sm text-secondary mt-2">Por {album.owner_name}</p>
+                      ) : null}
+                      {album.description ? (
                         <p className="text-secondary text-sm line-clamp-2">{album.description}</p>
-                      )}
+                      ) : null}
                       <p className="text-xs text-secondary mt-2">
                         {new Date(album.created_at).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })}
                       </p>

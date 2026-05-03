@@ -13,6 +13,7 @@ interface Album {
   description: string;
   status: string;
   created_at: string;
+  preview_url?: string | null;
 }
 
 export default function Dashboard() {
@@ -56,7 +57,26 @@ export default function Dashboard() {
       if (!userId) return;
       try {
         const data = await albumService.getMyAlbums(userId);
-        setAlbums(data || []);
+        const rawAlbums: Album[] = data || [];
+
+        const enriched = await Promise.all(
+          rawAlbums.map(async (album) => {
+            try {
+              const res = await fetch(
+                `http://localhost:8000/api/public/albums/${album.id}/my-files?user_id=${userId}`
+              );
+              if (!res.ok) return { ...album, preview_url: null };
+              const json = await res.json();
+              const files = (json.files || []).filter((file: any) => file.type === "image");
+              const clean = files.find((file: any) => file.status === "clean");
+              return { ...album, preview_url: (clean || files[0])?.url || null };
+            } catch {
+              return { ...album, preview_url: null };
+            }
+          })
+        );
+
+        setAlbums(enriched);
       } catch (err) {
         console.error("Error al cargar álbumes", err);
       } finally {
@@ -167,8 +187,17 @@ export default function Dashboard() {
                         {album.status === 'approved' ? 'Aprobado' : album.status === 'pending' ? 'Pendiente' : 'Rechazado'}
                       </span>
                     </div>
-                    <div className="p-8 bg-surface-container flex items-center justify-center">
-                      <span className="material-symbols-outlined text-5xl text-secondary opacity-20">photo_library</span>
+                    <div className="p-0 bg-surface-container flex items-center justify-center aspect-[4/3] overflow-hidden">
+                      {album.preview_url ? (
+                        <img
+                          src={album.preview_url}
+                          alt={album.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined text-5xl text-secondary opacity-20">photo_library</span>
+                      )}
                     </div>
                     <div className="p-5">
                       <h3 className="font-headline-sm text-headline-sm text-on-surface mb-1.5 truncate">{album.title}</h3>
