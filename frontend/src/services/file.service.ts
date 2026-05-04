@@ -33,10 +33,10 @@ export const fileService = {
     return filesWithUrl;
   },
 
-  async decideFile(fileId: string, supervisorId: string, action: "approve" | "reject") {
+  async decideFile(fileId: string, supervisorId: string, action: "approve" | "reject", reason?: string) {
     return await apiFetch(`/api/supervisor/quarantine/${fileId}`, {
       method: "PATCH",
-      body: JSON.stringify({ supervisor_id: supervisorId, action })
+      body: JSON.stringify({ supervisor_id: supervisorId, action, reason })
     });
   }
 };

@@ -10,8 +10,8 @@
 - (Resuelto) Los endpoints de cuarentena validan JWT y usan el `supervisor_id` del token. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L1).
 
 ### Medio
-- La vista de supervisor no muestra los metadatos del analisis (detalles LSB/chi/DCT o pdf_details). El requisito pide ver el "por que" fue marcado. Ver [frontend/src/app/supervisor/page.tsx](frontend/src/app/supervisor/page.tsx#L240) y [app/services/file_analysis.py](app/services/file_analysis.py#L1).
-- No hay auditoria de decisiones (quien aprobo/rechazo, timestamp) ni registro de motivo del supervisor.
+- (Resuelto) La vista de supervisor muestra motivo resumido y el detalle de analisis esta en `/quarantine`. Ver [frontend/src/app/supervisor/page.tsx](frontend/src/app/supervisor/page.tsx#L220) y [frontend/src/app/quarantine/page.tsx](frontend/src/app/quarantine/page.tsx#L1).
+- (Resuelto) Se registra auditoria de decisiones con motivo en `decision_audit`. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L7) y [database.sql](database.sql#L47).
 
 ### Bajo
 - No hay paginacion/filtros en la lista de cuarentena; puede degradar la UX con muchos archivos.

@@ -60,6 +60,17 @@ CREATE TABLE public.files (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+  -- Tabla Decision Audit: registra decisiones del supervisor
+  CREATE TABLE public.decision_audit (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    entity_type TEXT NOT NULL,
+    entity_id UUID NOT NULL,
+    supervisor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    action TEXT NOT NULL,
+    reason TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
 -- ==========================================
 -- 3. AUTOMATIZACIÓN DE SEGURIDAD (TRIGGER)
 -- ==========================================
@@ -82,6 +93,7 @@ CREATE TRIGGER on_auth_user_created
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.albums ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.decision_audit ENABLE ROW LEVEL SECURITY;
 
 -- Otorgar permisos a las tablas existentes
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
@@ -185,6 +197,29 @@ USING (
   )
 )
 WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+);
+
+-- Decision Audit: supervisor puede insertar y leer
+CREATE POLICY "decision_audit_insert_supervisor"
+ON public.decision_audit
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid() AND p.role = 'supervisor'
+  )
+);
+
+CREATE POLICY "decision_audit_select_supervisor"
+ON public.decision_audit
+FOR SELECT
+TO authenticated
+USING (
   EXISTS (
     SELECT 1 FROM public.profiles p
     WHERE p.id = auth.uid() AND p.role = 'supervisor'

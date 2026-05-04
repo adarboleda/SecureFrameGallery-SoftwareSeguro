@@ -5,6 +5,19 @@ from app.core.security import get_authenticated_user, get_user_id
 
 router = APIRouter()
 
+
+def log_decision(entity_type: str, entity_id: str, supervisor_id: str, action: str, reason: str | None):
+    try:
+        supabase.table("decision_audit").insert({
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "supervisor_id": supervisor_id,
+            "action": action,
+            "reason": reason or ""
+        }).execute()
+    except Exception:
+        pass
+
 # ==========================================
 # RF02: REVISIÓN DE ÁLBUMES (SUPERVISOR)
 # ==========================================
@@ -29,6 +42,8 @@ async def resolve_album(request: Request, album_id: str, decision: Decision):
         
     new_status = "approved" if decision.action == "approve" else "rejected"
     update_response = supabase.table("albums").update({"status": new_status}).eq("id", album_id).execute()
+
+    log_decision("album", album_id, auth_user_id, decision.action, decision.reason)
     
     return {"message": f"Álbum marcado como {new_status}.", "data": update_response.data}
 
@@ -81,11 +96,13 @@ async def resolve_quarantine(request: Request, file_id: str, decision: Decision)
                 "status": new_status,
                 "storage_path": new_path
             }).eq("id", file_id).execute()
+            log_decision("file", file_id, auth_user_id, decision.action, decision.reason)
             return {"message": f"Archivo aprobado y movido a público.", "data": update_response.data}
         else:
             # Eliminar del storage por rechazo
             supabase.storage.from_("secure-gallery-images").remove([old_path])
             update_response = supabase.table("files").update({"status": new_status}).eq("id", file_id).execute()
+            log_decision("file", file_id, auth_user_id, decision.action, decision.reason)
             return {"message": f"Archivo rechazado y eliminado del servidor.", "data": update_response.data}
             
     return {"message": "Archivo no encontrado."}

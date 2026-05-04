@@ -32,3 +32,4 @@ class AlbumCreate(BaseModel):
 class Decision(BaseModel):
     supervisor_id: str
     action: Literal["approve", "reject"]  # Solo acepta estos dos valores
+    reason: str | None = None

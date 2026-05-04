@@ -123,7 +123,8 @@ function QuarantineContent() {
   const handleDecision = async (action: "approve" | "reject") => {
     if (!fileData || !supervisorId) return;
     try {
-      await fileService.decideFile(fileData.id, supervisorId, action);
+      const reason = window.prompt("Motivo (opcional):") || "";
+      await fileService.decideFile(fileData.id, supervisorId, action, reason);
       window.location.href = "/supervisor";
     } catch (err) {
       console.error(`Failed to ${action} file:`, err);

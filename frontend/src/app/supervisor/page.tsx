@@ -127,7 +127,8 @@ export default function SupervisorDashboard() {
     if (!supervisorId) return;
     setDecidingId(albumId);
     try {
-      await albumService.decideAlbum(albumId, supervisorId, action);
+      const reason = window.prompt("Motivo (opcional):") || "";
+      await albumService.decideAlbum(albumId, supervisorId, action, reason);
       setPendingAlbums(prev => prev.filter(a => a.id !== albumId));
     } catch (err) {
       console.error(`Error al ${action} álbum`, err);
@@ -140,7 +141,8 @@ export default function SupervisorDashboard() {
     if (!supervisorId) return;
     setDecidingId(fileId);
     try {
-      await fileService.decideFile(fileId, supervisorId, action);
+      const reason = window.prompt("Motivo (opcional):") || "";
+      await fileService.decideFile(fileId, supervisorId, action, reason);
       setFiles(prev => prev.filter(f => f.id !== fileId));
     } catch (err) {
       console.error(`Error al ${action} archivo`, err);
@@ -317,6 +319,17 @@ export default function SupervisorDashboard() {
                       <p className="font-label-sm text-label-sm text-secondary mt-0.5">
                         Propietario: <span className="font-mono">{file.user_email || "—"}</span>
                       </p>
+                      {file.analysis_metadata ? (
+                        <p className="font-label-sm text-label-sm text-secondary mt-1">
+                          Motivo: <span className="text-on-surface">
+                            {file.analysis_metadata.pdf_details?.length
+                              ? `PDF sospechoso (${file.analysis_metadata.pdf_details.length})`
+                              : file.analysis_metadata.details
+                                ? "Imagen con anomalias LSB/Chi/DCT"
+                                : "Marcado por el analisis"}
+                          </span>
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex gap-2">
                       <button

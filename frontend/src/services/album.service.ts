@@ -29,10 +29,10 @@ export const albumService = {
     return await apiFetch(`/api/supervisor/albums?supervisor_id=${supervisorId}`);
   },
 
-  async decideAlbum(albumId: string, supervisorId: string, action: "approve" | "reject") {
+  async decideAlbum(albumId: string, supervisorId: string, action: "approve" | "reject", reason?: string) {
     return await apiFetch(`/api/supervisor/albums/${albumId}`, {
       method: "PATCH",
-      body: JSON.stringify({ supervisor_id: supervisorId, action })
+      body: JSON.stringify({ supervisor_id: supervisorId, action, reason })
     });
   }
 };
