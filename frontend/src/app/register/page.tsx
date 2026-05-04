@@ -46,7 +46,7 @@ export default function Register() {
 
       window.location.href = '/login?registered=true';
     } catch (err: any) {
-      setError(err.message || 'Error al registrar la cuenta');
+      setError('No se pudo registrar la cuenta. Verifica tus datos e inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }

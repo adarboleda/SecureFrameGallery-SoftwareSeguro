@@ -60,6 +60,15 @@ CREATE TABLE public.files (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+  -- Tabla Auth Attempts: bloqueo temporal por intentos fallidos
+  CREATE TABLE public.auth_attempts (
+    email TEXT PRIMARY KEY,
+    attempts INTEGER DEFAULT 0 NOT NULL,
+    locked_until TIMESTAMP WITH TIME ZONE,
+    last_attempt_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_ip TEXT
+  );
+
   -- Tabla Decision Audit: registra decisiones del supervisor
   CREATE TABLE public.decision_audit (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -94,6 +103,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.albums ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.decision_audit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.auth_attempts ENABLE ROW LEVEL SECURITY;
 
 -- Otorgar permisos a las tablas existentes
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;

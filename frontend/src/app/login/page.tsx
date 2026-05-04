@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,16 +18,25 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const data = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) throw error;
+      const access_token = data.access_token;
+      const refresh_token = data.refresh_token;
+      if (!access_token || !refresh_token) {
+        throw new Error('Credenciales inválidas.');
+      }
 
-      const userId = data.user?.id;
+      await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      const userId = data.user_id;
       if (!userId)
-        throw new Error('No se pudo obtener el usuario autenticado.');
+        throw new Error('Credenciales inválidas.');
 
       // Consultar el rol del usuario al backend
       const roleRes = await fetch(
@@ -41,7 +51,7 @@ export default function Login() {
         window.location.href = '/dashboard';
       }
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      setError('Credenciales inválidas o cuenta bloqueada temporalmente.');
     } finally {
       setLoading(false);
     }
