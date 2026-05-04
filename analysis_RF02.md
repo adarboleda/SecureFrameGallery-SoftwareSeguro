@@ -12,7 +12,8 @@
 - (Resuelto) El backend ahora valida el JWT y usa el `user_id` del token. Ver [app/api/routes/albums.py](app/api/routes/albums.py#L1).
 
 ### Medio
-- No hay validacion de longitud/formato en backend para `title/description/privacy` mas alla de `bleach`. Si el frontend se salta, pueden entrar datos fuera de rango. Ver [app/models/schemas.py](app/models/schemas.py#L16) y [app/api/routes/albums.py](app/api/routes/albums.py#L15).
+- (Resuelto) Backend valida longitud y privacidad en `AlbumCreate`. Ver [app/models/schemas.py](app/models/schemas.py#L16).
+
 - El endpoint de supervisor no verifica que el album este en estado `pending` antes de aprobar/rechazar. Podria cambiar estados arbitrariamente. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L15).
 
 ### Bajo

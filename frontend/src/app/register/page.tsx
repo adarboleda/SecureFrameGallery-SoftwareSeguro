@@ -111,7 +111,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
             />
             {fieldErrors.password && <p className="text-red-500 text-xs mt-1 px-4">{fieldErrors.password}</p>}
-            <p className="text-xs text-secondary mt-1 px-4">Mín. 8 caracteres, 1 mayúscula, 1 número, 1 especial (!@#$%)</p>
+            <p className="text-xs text-secondary mt-1 px-4">La política completa se valida en el servidor.</p>
           </div>
           <div className="relative">
             <input

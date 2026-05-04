@@ -38,6 +38,8 @@ export default function SupervisorDashboard() {
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [supervisorEmail, setSupervisorEmail] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"albums" | "quarantine">("albums");
+  const [quarantineSearch, setQuarantineSearch] = useState<string>("");
+  const [quarantinePage, setQuarantinePage] = useState<number>(1);
   const [decidingId, setDecidingId] = useState<string | null>(null);
   const [decisionModal, setDecisionModal] = useState<{ type: "album" | "file"; id: string; action: "approve" | "reject" } | null>(null);
   const [decisionReason, setDecisionReason] = useState<string>("");
@@ -158,6 +160,21 @@ export default function SupervisorDashboard() {
     await supabase.auth.signOut();
     router.push("/");
   };
+
+  const filteredQuarantine = files.filter((file) => {
+    const term = quarantineSearch.trim().toLowerCase();
+    if (!term) return true;
+    const album = (file.album_title || "").toLowerCase();
+    const owner = (file.user_email || "").toLowerCase();
+    return album.includes(term) || owner.includes(term);
+  });
+
+  const quarantinePageSize = 9;
+  const quarantineTotalPages = Math.max(1, Math.ceil(filteredQuarantine.length / quarantinePageSize));
+  const quarantineSlice = filteredQuarantine.slice(
+    (quarantinePage - 1) * quarantinePageSize,
+    quarantinePage * quarantinePageSize
+  );
 
   return (
     <div className="bg-background text-on-background min-h-screen font-body-md antialiased">
@@ -296,66 +313,106 @@ export default function SupervisorDashboard() {
               <p className="font-body-lg">No hay archivos en cuarentena. El sistema está limpio.</p>
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
-              {files.map((file) => (
-                <article key={file.id} className="break-inside-avoid bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col">
-                  <div className="relative w-full aspect-[4/5] bg-surface-container-high">
-                    {(file.file_type === "pdf" || file.type === "pdf") ? (
-                      <div className="w-full h-full flex items-center justify-center bg-surface-container-high">
-                        <span className="material-symbols-outlined text-6xl text-secondary">picture_as_pdf</span>
+            <div className="space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="relative w-full sm:flex-1 sm:max-w-none">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
+                  <input
+                    value={quarantineSearch}
+                    onChange={(e) => {
+                      setQuarantineSearch(e.target.value);
+                      setQuarantinePage(1);
+                    }}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant focus:ring-2 focus:ring-primary-container outline-none text-sm"
+                    placeholder="Filtrar por álbum o propietario"
+                    type="text"
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-sm text-secondary sm:shrink-0">
+                  <span>{filteredQuarantine.length} resultados</span>
+                  <span className="text-secondary">•</span>
+                  <span>Página {quarantinePage} de {quarantineTotalPages}</span>
+                </div>
+              </div>
+
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+                {quarantineSlice.map((file) => (
+                  <article key={file.id} className="break-inside-avoid bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col">
+                    <div className="relative w-full aspect-[4/5] bg-surface-container-high">
+                      {(file.file_type === "pdf" || file.type === "pdf") ? (
+                        <div className="w-full h-full flex items-center justify-center bg-surface-container-high">
+                          <span className="material-symbols-outlined text-6xl text-secondary">picture_as_pdf</span>
+                        </div>
+                      ) : (
+                        <img className="w-full h-full object-cover" src={file.preview_url || file.url} alt="Archivo en cuarentena" />
+                      )}
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-[#E60023]/90 backdrop-blur-sm text-white px-3 py-1 rounded-full font-label-sm text-label-sm uppercase flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">warning</span> Cuarentena
+                        </span>
                       </div>
-                    ) : (
-                      <img className="w-full h-full object-cover" src={file.preview_url || file.url} alt="Archivo en cuarentena" />
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className="bg-[#E60023]/90 backdrop-blur-sm text-white px-3 py-1 rounded-full font-label-sm text-label-sm uppercase flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">warning</span> Cuarentena
-                      </span>
                     </div>
-                  </div>
-                  <div className="p-4 flex flex-col gap-3">
-                    <div>
-                      <h2 className="font-headline-sm text-headline-sm text-on-surface">Archivo Sospechoso</h2>
-                      <p className="font-label-sm text-label-sm text-secondary mt-1">
-                        Álbum: <span className="font-medium text-on-surface">{file.album_title || file.album_id.substring(0, 12) + "…"}</span>
-                      </p>
-                      <p className="font-label-sm text-label-sm text-secondary mt-0.5">
-                        Propietario: <span className="font-mono">{file.user_email || "—"}</span>
-                      </p>
-                      {file.analysis_metadata ? (
+                    <div className="p-4 flex flex-col gap-3">
+                      <div>
+                        <h2 className="font-headline-sm text-headline-sm text-on-surface">Archivo Sospechoso</h2>
                         <p className="font-label-sm text-label-sm text-secondary mt-1">
-                          Motivo: <span className="text-on-surface">
-                            {file.analysis_metadata.pdf_details?.length
-                              ? `PDF sospechoso (${file.analysis_metadata.pdf_details.length})`
-                              : file.analysis_metadata.details
-                                ? "Imagen con anomalias LSB/Chi/DCT"
-                                : "Marcado por el analisis"}
-                          </span>
+                          Álbum: <span className="font-medium text-on-surface">{file.album_title || file.album_id.substring(0, 12) + "…"}</span>
                         </p>
-                      ) : null}
+                        <p className="font-label-sm text-label-sm text-secondary mt-0.5">
+                          Propietario: <span className="font-mono">{file.user_email || "—"}</span>
+                        </p>
+                        {file.analysis_metadata ? (
+                          <p className="font-label-sm text-label-sm text-secondary mt-1">
+                            Motivo: <span className="text-on-surface">
+                              {file.analysis_metadata.pdf_details?.length
+                                ? `PDF sospechoso (${file.analysis_metadata.pdf_details.length})`
+                                : file.analysis_metadata.details
+                                  ? "Imagen con anomalias LSB/Chi/DCT"
+                                  : "Marcado por el analisis"}
+                            </span>
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openDecisionModal("file", file.id, "approve")}
+                          disabled={decidingId === file.id}
+                          className="flex-1 bg-green-600 text-white font-label-md text-label-md py-2.5 rounded-full flex items-center justify-center gap-1 hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">check</span> Aprobar
+                        </button>
+                        <button
+                          onClick={() => openDecisionModal("file", file.id, "reject")}
+                          disabled={decidingId === file.id}
+                          className="flex-1 bg-red-600 text-white font-label-md text-label-md py-2.5 rounded-full flex items-center justify-center gap-1 hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span> Rechazar
+                        </button>
+                      </div>
+                      <Link href={`/quarantine?fileId=${file.id}`} className="w-full bg-secondary-fixed text-on-surface font-label-md text-label-md py-2 rounded-full flex items-center justify-center gap-1 hover:bg-secondary-fixed-dim transition-colors cursor-pointer">
+                        <span className="material-symbols-outlined text-[16px]">analytics</span> Ver Análisis
+                      </Link>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openDecisionModal("file", file.id, "approve")}
-                        disabled={decidingId === file.id}
-                        className="flex-1 bg-green-600 text-white font-label-md text-label-md py-2.5 rounded-full flex items-center justify-center gap-1 hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">check</span> Aprobar
-                      </button>
-                      <button
-                        onClick={() => openDecisionModal("file", file.id, "reject")}
-                        disabled={decidingId === file.id}
-                        className="flex-1 bg-red-600 text-white font-label-md text-label-md py-2.5 rounded-full flex items-center justify-center gap-1 hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">close</span> Rechazar
-                      </button>
-                    </div>
-                    <Link href={`/quarantine?fileId=${file.id}`} className="w-full bg-secondary-fixed text-on-surface font-label-md text-label-md py-2 rounded-full flex items-center justify-center gap-1 hover:bg-secondary-fixed-dim transition-colors cursor-pointer">
-                      <span className="material-symbols-outlined text-[16px]">analytics</span> Ver Análisis
-                    </Link>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setQuarantinePage((p) => Math.max(1, p - 1))}
+                  disabled={quarantinePage === 1}
+                  className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setQuarantinePage((p) => Math.min(quarantineTotalPages, p + 1))}
+                  disabled={quarantinePage === quarantineTotalPages}
+                  className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  Siguiente
+                </button>
+              </div>
             </div>
           )
         )}

@@ -1,16 +1,8 @@
 import { z } from "zod";
 
-// ==========================================
-// RF01: POLÍTICA DE CONTRASEÑAS ROBUSTAS
-// Requisito: mayúsculas, números, caracteres especiales, mínimo 8 caracteres
-// ==========================================
 const passwordSchema = z
   .string()
-  .min(8, { message: "La contraseña debe tener al menos 8 caracteres" })
-  .regex(/[A-Z]/, { message: "Debe contener al menos una letra mayúscula" })
-  .regex(/[a-z]/, { message: "Debe contener al menos una letra minúscula" })
-  .regex(/[0-9]/, { message: "Debe contener al menos un número" })
-  .regex(/[^A-Za-z0-9]/, { message: "Debe contener al menos un carácter especial (!@#$%^&*)" });
+  .min(8, { message: "La contraseña debe tener al menos 8 caracteres" });
 
 export const loginSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),

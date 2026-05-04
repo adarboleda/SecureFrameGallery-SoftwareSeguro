@@ -14,7 +14,7 @@
 - (Resuelto) Se registra auditoria de decisiones con motivo en `decision_audit`. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L7) y [database.sql](database.sql#L47).
 
 ### Bajo
-- No hay paginacion/filtros en la lista de cuarentena; puede degradar la UX con muchos archivos.
+- (Resuelto) La lista de cuarentena tiene filtro y paginacion en UI.
 
 ## Notas
 - El endpoint devuelve `analysis_metadata` pero la UI no lo consume. Se podria usar en la vista `/quarantine?fileId=...` si existe.

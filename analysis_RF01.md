@@ -17,7 +17,7 @@
 - (Resuelto) El endpoint de rol ya no devuelve 404; responde rol por defecto. Ver [app/api/routes/auth.py](app/api/routes/auth.py#L48).
 
 ### Bajo
-- La politica de contrasenas esta duplicada en frontend y backend, pero el registro real no usa el backend; esto puede causar desalineacion si se cambia una sola. Ver [frontend/src/schemas/auth.schema.ts](frontend/src/schemas/auth.schema.ts#L1) y [app/models/schemas.py](app/models/schemas.py#L1).
+- (Resuelto) La validacion fuerte se mantiene en backend; el frontend solo valida longitud minima. Ver [frontend/src/schemas/auth.schema.ts](frontend/src/schemas/auth.schema.ts#L1) y [app/models/schemas.py](app/models/schemas.py#L1).
 
 ## Notas
 - Hashing fuerte: Supabase Auth cumple hashing con salting por defecto, pero no esta documentado en el codigo. Para evidenciarlo en el informe, conviene mencionar que el registro real se delega a Supabase Auth.

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from app.services.supabase_client import supabase
+from app.services.supabase_client import supabase, supabase_admin
 
 router = APIRouter()
 
 def _require_supervisor(supervisor_id: str):
-    prof = supabase.table("profiles").select("role").eq("id", supervisor_id).execute()
+    prof = supabase_admin.table("profiles").select("role").eq("id", supervisor_id).execute()
     if not prof.data or prof.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Solo supervisores pueden realizar esta acción.")
 
@@ -13,7 +13,7 @@ async def list_users(supervisor_id: str):
     """Lista todos los usuarios del sistema para el supervisor."""
     _require_supervisor(supervisor_id)
     
-    users_list = supabase.auth.admin.list_users()
+    users_list = supabase_admin.auth.admin.list_users()
     users = None
     if hasattr(users_list, "users"):
         users = users_list.users
@@ -27,7 +27,7 @@ async def list_users(supervisor_id: str):
 
     result = []
     for u in users:
-        profile = supabase.table("profiles").select("role").eq("id", u.id).execute()
+        profile = supabase_admin.table("profiles").select("role").eq("id", u.id).execute()
         role = profile.data[0]["role"] if profile.data else "user"
         result.append({
             "id": u.id,

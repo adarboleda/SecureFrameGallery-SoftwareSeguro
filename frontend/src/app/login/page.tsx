@@ -51,7 +51,12 @@ export default function Login() {
         window.location.href = '/dashboard';
       }
     } catch (err: any) {
-      setError('Credenciales inválidas o cuenta bloqueada temporalmente.');
+      const message = String(err?.message || '').toLowerCase();
+      if (message.includes('bloqueada')) {
+        setError('Cuenta bloqueada temporalmente. Intenta de nuevo en 15 minutos.');
+      } else {
+        setError('Credenciales inválidas.');
+      }
     } finally {
       setLoading(false);
     }

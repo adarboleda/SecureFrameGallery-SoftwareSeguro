@@ -27,7 +27,25 @@ class AlbumCreate(BaseModel):
     user_id: str
     title: str
     description: str
-    privacy: str = "public"  # RF02: Privacidad inicial del álbum
+    privacy: Literal["public", "private"] = "public"  # RF02: Privacidad inicial del álbum
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        if len(v) < 3:
+            raise ValueError("El título debe tener al menos 3 caracteres")
+        if len(v) > 50:
+            raise ValueError("El título no debe exceder 50 caracteres")
+        return v
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v: str) -> str:
+        if len(v) < 5:
+            raise ValueError("La descripción debe tener al menos 5 caracteres")
+        if len(v) > 200:
+            raise ValueError("La descripción no debe exceder 200 caracteres")
+        return v
 
 class Decision(BaseModel):
     supervisor_id: str
