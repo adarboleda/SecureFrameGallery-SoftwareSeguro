@@ -39,6 +39,8 @@ export default function SupervisorDashboard() {
   const [supervisorEmail, setSupervisorEmail] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"albums" | "quarantine">("albums");
   const [decidingId, setDecidingId] = useState<string | null>(null);
+  const [decisionModal, setDecisionModal] = useState<{ type: "album" | "file"; id: string; action: "approve" | "reject" } | null>(null);
+  const [decisionReason, setDecisionReason] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
@@ -123,29 +125,30 @@ export default function SupervisorDashboard() {
     loadData();
   }, [router]);
 
-  const handleAlbumDecision = async (albumId: string, action: "approve" | "reject") => {
-    if (!supervisorId) return;
-    setDecidingId(albumId);
-    try {
-      const reason = window.prompt("Motivo (opcional):") || "";
-      await albumService.decideAlbum(albumId, supervisorId, action, reason);
-      setPendingAlbums(prev => prev.filter(a => a.id !== albumId));
-    } catch (err) {
-      console.error(`Error al ${action} álbum`, err);
-    } finally {
-      setDecidingId(null);
-    }
+  const openDecisionModal = (type: "album" | "file", id: string, action: "approve" | "reject") => {
+    setDecisionReason("");
+    setDecisionModal({ type, id, action });
   };
 
-  const handleFileDecision = async (fileId: string, action: "approve" | "reject") => {
-    if (!supervisorId) return;
-    setDecidingId(fileId);
+  const closeDecisionModal = () => {
+    setDecisionModal(null);
+    setDecisionReason("");
+  };
+
+  const submitDecision = async () => {
+    if (!supervisorId || !decisionModal) return;
+    setDecidingId(decisionModal.id);
     try {
-      const reason = window.prompt("Motivo (opcional):") || "";
-      await fileService.decideFile(fileId, supervisorId, action, reason);
-      setFiles(prev => prev.filter(f => f.id !== fileId));
+      if (decisionModal.type === "album") {
+        await albumService.decideAlbum(decisionModal.id, supervisorId, decisionModal.action, decisionReason.trim());
+        setPendingAlbums(prev => prev.filter(a => a.id !== decisionModal.id));
+      } else {
+        await fileService.decideFile(decisionModal.id, supervisorId, decisionModal.action, decisionReason.trim());
+        setFiles(prev => prev.filter(f => f.id !== decisionModal.id));
+      }
+      closeDecisionModal();
     } catch (err) {
-      console.error(`Error al ${action} archivo`, err);
+      console.error(`Error al ${decisionModal.action} ${decisionModal.type}`, err);
     } finally {
       setDecidingId(null);
     }
@@ -265,7 +268,7 @@ export default function SupervisorDashboard() {
                   </div>
                   <div className="flex gap-3 shrink-0">
                     <button
-                      onClick={() => handleAlbumDecision(album.id, "approve")}
+                      onClick={() => openDecisionModal("album", album.id, "approve")}
                       disabled={decidingId === album.id}
                       className="flex items-center gap-2 bg-green-600 text-white font-label-md text-label-md px-5 py-3 rounded-full hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
                     >
@@ -273,7 +276,7 @@ export default function SupervisorDashboard() {
                       Aprobar
                     </button>
                     <button
-                      onClick={() => handleAlbumDecision(album.id, "reject")}
+                      onClick={() => openDecisionModal("album", album.id, "reject")}
                       disabled={decidingId === album.id}
                       className="flex items-center gap-2 bg-red-600 text-white font-label-md text-label-md px-5 py-3 rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
                     >
@@ -333,14 +336,14 @@ export default function SupervisorDashboard() {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleFileDecision(file.id, "approve")}
+                        onClick={() => openDecisionModal("file", file.id, "approve")}
                         disabled={decidingId === file.id}
                         className="flex-1 bg-green-600 text-white font-label-md text-label-md py-2.5 rounded-full flex items-center justify-center gap-1 hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">check</span> Aprobar
                       </button>
                       <button
-                        onClick={() => handleFileDecision(file.id, "reject")}
+                        onClick={() => openDecisionModal("file", file.id, "reject")}
                         disabled={decidingId === file.id}
                         className="flex-1 bg-red-600 text-white font-label-md text-label-md py-2.5 rounded-full flex items-center justify-center gap-1 hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
                       >
@@ -357,6 +360,38 @@ export default function SupervisorDashboard() {
           )
         )}
       </main>
+
+      {decisionModal && (
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-[min(92vw,520px)] min-w-[280px] bg-surface-container-lowest rounded-2xl shadow-[0_20px_60px_-25px_rgba(0,0,0,0.4)] p-6">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface mb-2">
+              {decisionModal.action === "approve" ? "Aprobar" : "Rechazar"} {decisionModal.type === "album" ? "álbum" : "archivo"}
+            </h3>
+            <p className="text-secondary text-sm mb-4">Motivo (opcional)</p>
+            <textarea
+              className="w-full bg-secondary-fixed border-none rounded-xl px-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-primary-container outline-none resize-none"
+              rows={3}
+              placeholder="Escribe una breve justificación"
+              value={decisionReason}
+              onChange={(e) => setDecisionReason(e.target.value)}
+            />
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={closeDecisionModal}
+                className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitDecision}
+                className={`px-4 py-2 rounded-full text-white transition-colors cursor-pointer ${decisionModal.action === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation (Mobile) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-4">

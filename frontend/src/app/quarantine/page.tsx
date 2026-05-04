@@ -32,6 +32,8 @@ function QuarantineContent() {
   const [fileData, setFileData] = useState<FileAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
+  const [decisionModal, setDecisionModal] = useState<{ action: "approve" | "reject" } | null>(null);
+  const [decisionReason, setDecisionReason] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
@@ -120,14 +122,23 @@ function QuarantineContent() {
     loadData();
   }, [fileId, router]);
 
-  const handleDecision = async (action: "approve" | "reject") => {
-    if (!fileData || !supervisorId) return;
+  const openDecisionModal = (action: "approve" | "reject") => {
+    setDecisionReason("");
+    setDecisionModal({ action });
+  };
+
+  const closeDecisionModal = () => {
+    setDecisionModal(null);
+    setDecisionReason("");
+  };
+
+  const handleDecision = async () => {
+    if (!fileData || !supervisorId || !decisionModal) return;
     try {
-      const reason = window.prompt("Motivo (opcional):") || "";
-      await fileService.decideFile(fileData.id, supervisorId, action, reason);
+      await fileService.decideFile(fileData.id, supervisorId, decisionModal.action, decisionReason.trim());
       window.location.href = "/supervisor";
     } catch (err) {
-      console.error(`Failed to ${action} file:`, err);
+      console.error(`Failed to ${decisionModal.action} file:`, err);
     }
   };
 
@@ -253,16 +264,48 @@ function QuarantineContent() {
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-sm mt-auto">
-          <button onClick={() => handleDecision("reject")} className="w-full bg-primary-container text-on-primary py-4 rounded-full font-label-md text-label-md hover:bg-surface-tint transition-colors shadow-[0_4px_14px_0_rgba(230,0,35,0.2)] flex items-center justify-center gap-2 cursor-pointer">
+          <button onClick={() => openDecisionModal("reject")} className="w-full bg-primary-container text-on-primary py-4 rounded-full font-label-md text-label-md hover:bg-surface-tint transition-colors shadow-[0_4px_14px_0_rgba(230,0,35,0.2)] flex items-center justify-center gap-2 cursor-pointer">
             <span className="material-symbols-outlined text-lg">block</span>
             Rechazar Archivo
           </button>
-          <button onClick={() => handleDecision("approve")} className="w-full bg-[#F0F0F0] text-on-surface py-4 rounded-full font-label-md text-label-md hover:bg-[#E5E5E5] transition-colors flex items-center justify-center gap-2 cursor-pointer">
+          <button onClick={() => openDecisionModal("approve")} className="w-full bg-[#F0F0F0] text-on-surface py-4 rounded-full font-label-md text-label-md hover:bg-[#E5E5E5] transition-colors flex items-center justify-center gap-2 cursor-pointer">
             <span className="material-symbols-outlined text-lg">check_circle</span>
             Aprobar (Falso Positivo)
           </button>
         </div>
       </div>
+
+      {decisionModal && (
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-[min(92vw,520px)] min-w-[280px] bg-surface-container-lowest rounded-2xl shadow-[0_20px_60px_-25px_rgba(0,0,0,0.4)] p-6">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface mb-2">
+              {decisionModal.action === "approve" ? "Aprobar" : "Rechazar"} archivo
+            </h3>
+            <p className="text-secondary text-sm mb-4">Motivo (opcional)</p>
+            <textarea
+              className="w-full bg-secondary-fixed border-none rounded-xl px-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-primary-container outline-none resize-none"
+              rows={3}
+              placeholder="Escribe una breve justificación"
+              value={decisionReason}
+              onChange={(e) => setDecisionReason(e.target.value)}
+            />
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={closeDecisionModal}
+                className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDecision}
+                className={`px-4 py-2 rounded-full text-white transition-colors cursor-pointer ${decisionModal.action === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
