@@ -7,11 +7,11 @@
 
 ## Falta / Riesgo
 ### Medio
-- La CSP en FastAPI es muy restrictiva (`script-src 'none'`) y solo aplica a endpoints JSON; no protege la app de Next.js (la cual tiene CSP propia). Esto no rompe RF05, pero la coherencia entre CSPs es parcial.
-- `allow_origins` en CORS esta configurado en `*`, lo cual es permisivo para un entorno de produccion. Ver [app/main.py](app/main.py#L11).
+- (Aceptado) La CSP en FastAPI aplica solo a endpoints JSON; la CSP efectiva para la UI es la de Next.js. Se documenta como separacion de responsabilidades.
+- (Resuelto) CORS usa una lista configurada por entorno en `CORS_ALLOW_ORIGINS`. Ver [app/main.py](app/main.py#L12).
 
 ### Bajo
-- La CSP en Next.js permite `'unsafe-inline'` y `'unsafe-eval'` para scripts, lo cual reduce la proteccion contra XSS en produccion. Ver [frontend/next.config.ts](frontend/next.config.ts#L1).
+- (Mitigado) Se elimina `'unsafe-eval'` en produccion y se mantiene `'unsafe-inline'` por limitacion de CSP estatica en Next.js. Ver [frontend/next.config.ts](frontend/next.config.ts#L1).
 
 ## Notas
 - El bloqueo de SVG malicioso depende de no permitir `image/svg+xml` en upload y de `nosniff`. La validacion de MIME en upload ya lo impide. Ver [app/api/routes/files.py](app/api/routes/files.py#L44).

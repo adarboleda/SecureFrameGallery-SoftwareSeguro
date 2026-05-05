@@ -11,5 +11,6 @@ class Settings:
     LSB_RATIO_MAX: float = float(os.getenv("LSB_RATIO_MAX", "0.501"))
     CHI_P_THRESHOLD: float = float(os.getenv("CHI_P_THRESHOLD", "0.99"))
     DCT_VARIANCE_THRESHOLD: float = float(os.getenv("DCT_VARIANCE_THRESHOLD", "10.0"))
+    CORS_ALLOW_ORIGINS: str = os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 
 settings = Settings()

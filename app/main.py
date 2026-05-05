@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.security import limiter
+from app.core.config import settings
 
 # Importamos los routers
 from app.api.routes import auth, albums, files, supervisor, public, admin
@@ -11,9 +12,15 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="Secure Frame Gallery - Security API")
 
 # Configuración estricta de CORS (RF05 mitigación perimetral)
+cors_allow_origins = [
+    origin.strip()
+    for origin in settings.CORS_ALLOW_ORIGINS.split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_allow_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

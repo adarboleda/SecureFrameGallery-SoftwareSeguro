@@ -18,7 +18,7 @@
 - (Resuelto) Los umbrales LSB/chi/DCT son configurables por variables de entorno. Ver [app/services/file_analysis.py](app/services/file_analysis.py#L1) y [app/core/config.py](app/core/config.py#L1).
 
 ### Bajo
-- El flujo guarda PNG re-encodeado incluso si el input es JPEG; esto altera el archivo original. Puede ser aceptable, pero no se documenta en el requisito.
+- (Aceptado) El flujo re-encodea a PNG para eliminar metadatos y normalizar el analisis; esto cambia el formato original (JPEG -> PNG) pero no afecta el analisis porque se realiza antes del guardado. Ver [app/api/routes/files.py](app/api/routes/files.py#L60).
 
 ## Notas
 - El flujo para PDFs tambien existe, pero RF03 se centra en imagenes. Ver [app/services/file_analysis.py](app/services/file_analysis.py#L73).
