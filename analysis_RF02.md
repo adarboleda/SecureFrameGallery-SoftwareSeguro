@@ -14,10 +14,10 @@
 ### Medio
 - (Resuelto) Backend valida longitud y privacidad en `AlbumCreate`. Ver [app/models/schemas.py](app/models/schemas.py#L16).
 
-- El endpoint de supervisor no verifica que el album este en estado `pending` antes de aprobar/rechazar. Podria cambiar estados arbitrariamente. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L15).
+- (Resuelto) El endpoint de supervisor valida que el album este en estado `pending` antes de aprobar/rechazar. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L20).
 
 ### Bajo
-- El flujo no registra auditoria de decisiones (quien aprobo/rechazo, fecha) en una tabla o logs persistentes.
+- (Resuelto) Se registra auditoria de decisiones en `decision_audit` al aprobar/rechazar. Ver [app/api/routes/supervisor.py](app/api/routes/supervisor.py#L6) y [database.sql](database.sql#L49).
 
 ## Notas
 - RLS en BD existe para `albums`, pero si el backend usa `service_role`, RLS no aplica. Ver [database.sql](database.sql#L82).

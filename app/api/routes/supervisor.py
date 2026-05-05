@@ -40,6 +40,14 @@ async def resolve_album(request: Request, album_id: str, decision: Decision):
     if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
         raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
         
+    album_check = supabase.table("albums").select("status").eq("id", album_id).execute()
+    if not album_check.data:
+        raise HTTPException(status_code=404, detail="Álbum no encontrado.")
+
+    current_status = album_check.data[0].get("status")
+    if current_status != "pending":
+        raise HTTPException(status_code=409, detail="El álbum ya no está pendiente.")
+
     new_status = "approved" if decision.action == "approve" else "rejected"
     update_response = supabase.table("albums").update({"status": new_status}).eq("id", album_id).execute()
 

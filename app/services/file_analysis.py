@@ -3,6 +3,8 @@ from PIL import Image
 from scipy.stats import chisquare
 import io
 import fitz  # PyMuPDF
+import zlib
+from app.core.config import settings
 
 def analyze_image_steganography(img: Image.Image) -> dict:
     """
@@ -14,7 +16,7 @@ def analyze_image_steganography(img: Image.Image) -> dict:
     
     ratio_ones = float(np.sum(lsb_array) / lsb_array.size)
     # La entropía en imágenes naturales rara vez es exactamente 0.5.
-    lsb_suspicious = 0.499 < ratio_ones < 0.501
+    lsb_suspicious = settings.LSB_RATIO_MIN < ratio_ones < settings.LSB_RATIO_MAX
     
     # 2. Ataque Estadístico Chi-Cuadrado (PoV)
     flat_img = img_array[:,:,0].flatten()
@@ -34,14 +36,14 @@ def analyze_image_steganography(img: Image.Image) -> dict:
     if len(expected) > 0:
         _, chi_p_value = chisquare(f_obs=observed, f_exp=expected)
         # Un p-value cercano a 1.0 (>0.99) indica manipulación artificial (frecuencias idénticas)
-        if chi_p_value > 0.99:
+        if chi_p_value > settings.CHI_P_THRESHOLD:
             chi_suspicious = True
 
     # 3. Análisis pseudo-DCT (Detección de variaciones anómalas)
     diff_h = np.diff(img_array, axis=1)
     diff_v = np.diff(img_array, axis=0)
     dct_variance_proxy = float(np.var(diff_h) + np.var(diff_v))
-    dct_suspicious = dct_variance_proxy < 10.0 # Indica una suavidad poco natural tras manipulación en frecuencias
+    dct_suspicious = dct_variance_proxy < settings.DCT_VARIANCE_THRESHOLD
     
     is_suspicious = lsb_suspicious or chi_suspicious or dct_suspicious
     
@@ -75,6 +77,58 @@ def _check_jpeg_structure(file_bytes: bytes) -> dict:
     if eoi_index == -1:
         return {"ok": False, "details": "jpeg_missing_eoi"}
 
+    pos = 2
+    found_sos = False
+    data_len = len(file_bytes)
+    while pos < data_len:
+        if pos >= eoi_index:
+            break
+
+        if file_bytes[pos] != 0xFF:
+            if not found_sos:
+                return {"ok": False, "details": "jpeg_invalid_marker"}
+            pos += 1
+            continue
+
+        while pos < data_len and file_bytes[pos] == 0xFF:
+            pos += 1
+        if pos >= data_len:
+            break
+
+        marker = file_bytes[pos]
+        pos += 1
+
+        if marker == 0xD9:
+            break
+
+        if marker == 0xDA:
+            found_sos = True
+            if pos + 2 > data_len:
+                return {"ok": False, "details": "jpeg_missing_sos_length"}
+            seg_len = int.from_bytes(file_bytes[pos : pos + 2], "big")
+            if seg_len < 2:
+                return {"ok": False, "details": "jpeg_invalid_segment_length"}
+            pos += seg_len
+            continue
+
+        if marker == 0x01 or 0xD0 <= marker <= 0xD7 or marker == 0xD8:
+            continue
+
+        if pos + 2 > data_len:
+            return {"ok": False, "details": "jpeg_missing_segment_length"}
+
+        seg_len = int.from_bytes(file_bytes[pos : pos + 2], "big")
+        if seg_len < 2:
+            return {"ok": False, "details": "jpeg_invalid_segment_length"}
+
+        if pos + seg_len > data_len:
+            return {"ok": False, "details": "jpeg_segment_overflow"}
+
+        pos += seg_len
+
+    if not found_sos:
+        return {"ok": False, "details": "jpeg_missing_sos"}
+
     trailing = file_bytes[eoi_index + 2 :]
     if trailing.strip(b"\x00\x0A\x0D\x20\t"):
         return {"ok": False, "details": "jpeg_trailing_data"}
@@ -97,6 +151,13 @@ def _check_png_structure(file_bytes: bytes) -> dict:
 
         if offset + length + 4 > data_len:
             return {"ok": False, "details": "png_chunk_overflow"}
+
+        chunk_data = file_bytes[offset : offset + length]
+        crc_read = int.from_bytes(file_bytes[offset + length : offset + length + 4], "big")
+        crc_calc = zlib.crc32(chunk_type)
+        crc_calc = zlib.crc32(chunk_data, crc_calc) & 0xFFFFFFFF
+        if crc_read != crc_calc:
+            return {"ok": False, "details": "png_crc_mismatch"}
 
         offset += length
         offset += 4  # CRC

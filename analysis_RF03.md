@@ -13,8 +13,9 @@
 - (Resuelto) La subida valida JWT y usa el `user_id` del token. Ver [app/api/routes/files.py](app/api/routes/files.py#L1).
 
 ### Medio
-- El analisis estructural no valida marcadores JPEG internos (APPx, SOS, tamaños) ni CRC de chunks PNG; solo verifica cabecera/EOF. Puede pasar por alto ciertos payloads en chunks validos. Ver [app/services/file_analysis.py](app/services/file_analysis.py#L49).
-- El analisis LSB/chi/DCT es heuristico y puede tener falsos positivos/negativos sin umbrales ajustables ni calibracion por tipo de imagen.
+- (Resuelto) El analisis estructural ahora valida marcadores JPEG internos y CRC de chunks PNG. Ver [app/services/file_analysis.py](app/services/file_analysis.py#L44).
+
+- (Resuelto) Los umbrales LSB/chi/DCT son configurables por variables de entorno. Ver [app/services/file_analysis.py](app/services/file_analysis.py#L1) y [app/core/config.py](app/core/config.py#L1).
 
 ### Bajo
 - El flujo guarda PNG re-encodeado incluso si el input es JPEG; esto altera el archivo original. Puede ser aceptable, pero no se documenta en el requisito.
