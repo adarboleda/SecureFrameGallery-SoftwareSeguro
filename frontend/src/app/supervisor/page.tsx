@@ -314,8 +314,8 @@ export default function SupervisorDashboard() {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="relative w-full sm:flex-1 sm:max-w-none">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                <div className="relative w-full sm:grow sm:basis-0 sm:min-w-[320px]">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
                   <input
                     value={quarantineSearch}

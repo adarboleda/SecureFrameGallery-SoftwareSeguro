@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response, Request
-from app.services.supabase_client import supabase
+from app.services.supabase_client import supabase, supabase_admin
 from app.core.security import get_authenticated_user, get_user_id
 
 router = APIRouter()
@@ -44,13 +44,13 @@ async def get_public_albums(response: Response):
     """
     add_security_headers(response)
     
-    albums_data = supabase.table("albums").select("id, user_id, title, description, created_at").eq("status", "approved").eq("privacy", "public").execute()
+    albums_data = supabase_admin.table("albums").select("id, user_id, title, description, created_at").eq("status", "approved").eq("privacy", "public").execute()
 
     result_albums = []
     for album in albums_data.data:
         owner_name = ""
         try:
-            user_resp = supabase.auth.admin.get_user_by_id(album["user_id"])
+            user_resp = supabase_admin.auth.admin.get_user_by_id(album["user_id"])
             if hasattr(user_resp, "user") and user_resp.user:
                 meta = user_resp.user.user_metadata or {}
                 owner_name = meta.get("username") or (user_resp.user.email or "")
@@ -82,21 +82,27 @@ async def get_public_files(album_id: str, response: Response):
     add_security_headers(response)
     
     # Verificar que el álbum sea público y esté aprobado
-    album_check = supabase.table("albums").select("*").eq("id", album_id).eq("status", "approved").execute()
+    album_check = supabase_admin.table("albums").select("id").eq("id", album_id).eq("status", "approved").eq("privacy", "public").execute()
     if not album_check.data:
         # Devolvemos array vacío para no filtrar información sobre si existe un álbum privado
         return {"files": []}
         
     # Buscar los archivos que pasaron el análisis (status = clean)
-    files_data = supabase.table("files").select("id, storage_path, file_type, created_at").eq("album_id", album_id).eq("status", "clean").execute()
+    files_data = supabase_admin.table("files").select("id, storage_path, file_type, created_at").eq("album_id", album_id).eq("status", "clean").execute()
     
     # Construir las URLs públicas usando Supabase Storage
     result_files = []
     for file in files_data.data:
         public_url = supabase.storage.from_("secure-gallery-images").get_public_url(file["storage_path"])
+        signed_url = ""
+        try:
+            signed_response = supabase_admin.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
+            signed_url = extract_signed_url(signed_response)
+        except Exception:
+            signed_url = ""
         result_files.append({
             "id": file["id"],
-            "url": public_url,
+            "url": signed_url or public_url,
             "type": file["file_type"],
             "created_at": file["created_at"]
         })
