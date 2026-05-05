@@ -135,6 +135,13 @@ FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+CREATE POLICY "albums_update_own"
+ON public.albums
+FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
 -- Albums: lectura publica de albumes aprobados y publicos
 CREATE POLICY "albums_select_public"
 ON public.albums

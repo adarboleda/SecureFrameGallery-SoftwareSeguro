@@ -13,6 +13,7 @@ interface Album {
   description: string;
   status: string;
   created_at: string;
+  privacy?: string;
   preview_url?: string | null;
 }
 
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("Usuario");
+  const [updatingPrivacyId, setUpdatingPrivacyId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadUser() {
@@ -109,9 +111,15 @@ export default function Dashboard() {
             </button>
           </Link>
           <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter antialiased">SecureFrame</h1>
-          <button onClick={handleLogout} className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer" title="Cerrar sesión">
-            <span className="material-symbols-outlined">logout</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-full px-4 py-2">
+              <span className="material-symbols-outlined text-secondary text-[18px]">person</span>
+              <span className="font-label-md text-label-md text-secondary truncate max-w-[180px]">{userName}</span>
+            </div>
+            <button onClick={handleLogout} className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer" title="Cerrar sesión">
+              <span className="material-symbols-outlined">logout</span>
+            </button>
+          </div>
         </div>
         {/* Desktop Navigation */}
         <nav className="hidden md:flex justify-center gap-8 py-3 border-t border-zinc-100">
@@ -182,9 +190,8 @@ export default function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {albums.map((album) => (
-                <Link key={album.id} href={`/albums/${album.id}`}>
-                  <div className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] group cursor-pointer relative border border-transparent hover:border-primary-container/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.1)]">
-                    <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                <div key={album.id} className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] group relative border border-transparent hover:border-primary-container/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.1)]">
+                  <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
                       <span className={`w-2 h-2 rounded-full ${
                         album.status === 'approved' ? 'bg-green-500' :
                         album.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
@@ -193,6 +200,53 @@ export default function Dashboard() {
                         {album.status === 'approved' ? 'Aprobado' : album.status === 'pending' ? 'Pendiente' : 'Rechazado'}
                       </span>
                     </div>
+                  <div className="absolute top-4 left-4 z-20">
+                    <div className="bg-white/90 backdrop-blur-sm p-1 rounded-full shadow-sm flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={async (event) => {
+                          event.stopPropagation();
+                          event.preventDefault();
+                          if (updatingPrivacyId || album.privacy === "public") return;
+                          try {
+                            setUpdatingPrivacyId(album.id);
+                            await albumService.updateAlbumPrivacy(album.id, "public");
+                            setAlbums((prev) => prev.map((item) => item.id === album.id ? { ...item, privacy: "public" } : item));
+                          } catch (err) {
+                            console.error("Error al actualizar privacidad", err);
+                          } finally {
+                            setUpdatingPrivacyId(null);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${album.privacy === "public" ? "bg-[#E60023] text-white" : "text-zinc-700 hover:bg-white"}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">public</span>
+                        Público
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async (event) => {
+                          event.stopPropagation();
+                          event.preventDefault();
+                          if (updatingPrivacyId || album.privacy === "private") return;
+                          try {
+                            setUpdatingPrivacyId(album.id);
+                            await albumService.updateAlbumPrivacy(album.id, "private");
+                            setAlbums((prev) => prev.map((item) => item.id === album.id ? { ...item, privacy: "private" } : item));
+                          } catch (err) {
+                            console.error("Error al actualizar privacidad", err);
+                          } finally {
+                            setUpdatingPrivacyId(null);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${album.privacy === "private" ? "bg-[#E60023] text-white" : "text-zinc-700 hover:bg-white"}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                        Privado
+                      </button>
+                    </div>
+                  </div>
+                  <Link href={`/albums/${album.id}`} className="block cursor-pointer">
                     <div className="p-0 bg-surface-container flex items-center justify-center aspect-[4/3] overflow-hidden">
                       {album.preview_url ? (
                         <img
@@ -209,8 +263,8 @@ export default function Dashboard() {
                       <h3 className="font-headline-sm text-headline-sm text-on-surface mb-1.5 truncate">{album.title}</h3>
                       <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">{album.description}</p>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               ))}
             </div>
           )}

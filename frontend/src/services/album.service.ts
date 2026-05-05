@@ -24,6 +24,12 @@ export const albumService = {
     });
   },
 
+  async updateAlbumPrivacy(albumId: string, privacy: "public" | "private") {
+    return await apiFetch(`/api/albums/${albumId}/privacy?privacy=${privacy}`, {
+      method: "PATCH"
+    });
+  },
+
   // Supervisor
   async getPendingAlbums(supervisorId: string) {
     return await apiFetch(`/api/supervisor/albums?supervisor_id=${supervisorId}`);

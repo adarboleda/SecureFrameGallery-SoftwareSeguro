@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 import bleach
 from app.models.schemas import AlbumCreate
 from app.core.security import limiter
-from app.services.supabase_client import supabase
+from app.services.supabase_client import supabase, supabase_admin
 from app.core.security import get_authenticated_user, get_user_id
 
 router = APIRouter()
@@ -18,8 +18,28 @@ async def get_my_albums(request: Request, user_id: str | None = None):
     """
     auth_user = get_authenticated_user(request)
     auth_user_id = get_user_id(auth_user)
-    response = supabase.table("albums").select("*").eq("user_id", auth_user_id).execute()
+    response = supabase_admin.table("albums").select("*").eq("user_id", auth_user_id).execute()
     return response.data
+
+@router.patch("/{album_id}/privacy")
+async def update_album_privacy(request: Request, album_id: str, privacy: str):
+    """
+    Permite al propietario cambiar la privacidad del álbum.
+    """
+    if privacy not in ["public", "private"]:
+        raise HTTPException(status_code=400, detail="Privacidad inválida.")
+
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+
+    album_check = supabase_admin.table("albums").select("id").eq("id", album_id).eq("user_id", auth_user_id).execute()
+    if not album_check.data:
+        raise HTTPException(status_code=404, detail="Álbum no encontrado.")
+
+    update_response = supabase_admin.table("albums").update({"privacy": privacy}).eq("id", album_id).execute()
+    if not update_response.data:
+        raise HTTPException(status_code=403, detail="No tienes permisos para actualizar este álbum.")
+    return {"message": "Privacidad actualizada.", "data": update_response.data}
 @router.post("/request")
 @limiter.limit("10/minute")
 async def request_album(request: Request, album: AlbumCreate):

@@ -123,11 +123,11 @@ async def get_my_album_files(request: Request, album_id: str, user_id: str | Non
     if user_id and user_id != auth_user_id:
         raise HTTPException(status_code=403, detail="User mismatch.")
 
-    album_check = supabase.table("albums").select("id").eq("id", album_id).eq("user_id", auth_user_id).execute()
+    album_check = supabase_admin.table("albums").select("id").eq("id", album_id).eq("user_id", auth_user_id).execute()
     if not album_check.data:
         raise HTTPException(status_code=403, detail="No tienes acceso a este álbum.")
 
-    files_data = supabase.table("files").select("id, storage_path, file_type, status, created_at").eq("album_id", album_id).execute()
+    files_data = supabase_admin.table("files").select("id, storage_path, file_type, status, created_at").eq("album_id", album_id).execute()
 
     result_files = []
     for file in files_data.data:
@@ -135,7 +135,7 @@ async def get_my_album_files(request: Request, album_id: str, user_id: str | Non
 
         # Try signed URL first (works for private buckets and quarantined files)
         try:
-            signed_response = supabase.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
+            signed_response = supabase_admin.storage.from_("secure-gallery-images").create_signed_url(file["storage_path"], 300)
             signed_url = extract_signed_url(signed_response)
             url = signed_url if signed_url else public_url
         except Exception:
