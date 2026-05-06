@@ -112,3 +112,33 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+@router.delete("/files/{file_id}")
+async def delete_file(file_id: str, request: Request):
+    """
+    Elimina un archivo del álbum del usuario autenticado.
+    Verifica que el archivo pertenezca al usuario antes de borrarlo.
+    """
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+
+    # Obtener el archivo y verificar propiedad
+    file_data = supabase_admin.table("files").select("id, user_id, storage_path").eq("id", file_id).execute()
+    if not file_data.data:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado.")
+
+    file_record = file_data.data[0]
+    if file_record["user_id"] != auth_user_id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este archivo.")
+
+    # Eliminar del storage de Supabase
+    try:
+        supabase_admin.storage.from_("secure-gallery-images").remove([file_record["storage_path"]])
+    except Exception:
+        pass  # Si ya no existe en storage, continuar con el borrado de la BD
+
+    # Eliminar el registro de la base de datos
+    supabase_admin.table("files").delete().eq("id", file_id).execute()
+
+    return {"message": "Archivo eliminado correctamente.", "file_id": file_id}

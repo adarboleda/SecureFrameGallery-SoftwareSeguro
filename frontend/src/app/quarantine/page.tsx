@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
-import { fileService } from "@/services/file.service";
-import { apiFetch } from "@/services/api";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { fileService } from '@/services/file.service';
+import { apiFetch } from '@/services/api';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 interface FileAnalysis {
   id: string;
@@ -37,8 +37,10 @@ function QuarantineContent() {
   const [fileData, setFileData] = useState<FileAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
-  const [decisionModal, setDecisionModal] = useState<{ action: "approve" | "reject" } | null>(null);
-  const [decisionReason, setDecisionReason] = useState<string>("");
+  const [decisionModal, setDecisionModal] = useState<{
+    action: 'approve' | 'reject';
+  } | null>(null);
+  const [decisionReason, setDecisionReason] = useState<string>('');
   const router = useRouter();
 
   useEffect(() => {
@@ -48,9 +50,11 @@ function QuarantineContent() {
         return;
       }
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) {
-          router.push("/login");
+          router.push('/login');
           return;
         }
         setSupervisorId(user.id);
@@ -60,18 +64,26 @@ function QuarantineContent() {
         if (file) {
           // Extract metadata from analysis_metadata field if present
           const meta = file.analysis_metadata || {};
-          
+
           // Translate analysis logs to Spanish
           const translateLog = (log: string): string => {
             const translations: Record<string, string> = {
-              "Anomalous frequency distribution detected.": "Distribución de frecuencias anómala detectada en los píxeles del archivo.",
-              "EXIF data stripped. Standard baseline profile confirmed.": "Datos EXIF eliminados. Perfil base estándar confirmado.",
-              "LSB anomaly detected.": "Anomalía en bits menos significativos (LSB) detectada.",
-              "Chi-square attack positive: artificial pixel distribution.": "Análisis Chi-cuadrado positivo: distribución artificial de píxeles.",
-              "DCT variance anomaly: unnaturally smooth image.": "Varianza DCT anómala: imagen artificialmente suavizada.",
-              "JavaScript embedded in link found.": "JavaScript embebido detectado en un enlace del PDF.",
-              "JavaScript in widget (Form) found.": "JavaScript en un widget de formulario del PDF.",
-              "Embedded files found.": "Archivos adjuntos ocultos encontrados en el PDF.",
+              'Anomalous frequency distribution detected.':
+                'Distribución de frecuencias anómala detectada en los píxeles del archivo.',
+              'EXIF data stripped. Standard baseline profile confirmed.':
+                'Datos EXIF eliminados. Perfil base estándar confirmado.',
+              'LSB anomaly detected.':
+                'Anomalía en bits menos significativos (LSB) detectada.',
+              'Chi-square attack positive: artificial pixel distribution.':
+                'Análisis Chi-cuadrado positivo: distribución artificial de píxeles.',
+              'DCT variance anomaly: unnaturally smooth image.':
+                'Varianza DCT anómala: imagen artificialmente suavizada.',
+              'JavaScript embedded in link found.':
+                'JavaScript embebido detectado en un enlace del PDF.',
+              'JavaScript in widget (Form) found.':
+                'JavaScript en un widget de formulario del PDF.',
+              'Embedded files found.':
+                'Archivos adjuntos ocultos encontrados en el PDF.',
             };
             return translations[log] || log;
           };
@@ -85,19 +97,23 @@ function QuarantineContent() {
           } else if (file.analysis_logs) {
             logs = file.analysis_logs.map(translateLog);
           } else {
-            logs = ["Contenido marcado para revisión manual por el sistema de análisis."];
+            logs = [
+              'Contenido marcado para revisión manual por el sistema de análisis.',
+            ];
           }
 
           // Fetch user email for this file
-          let userEmail = "—";
-          let albumTitle = file.album_id?.substring(0, 12) + "…";
+          let userEmail = '—';
+          let albumTitle = file.album_id?.substring(0, 12) + '…';
           try {
             const albumData = await apiFetch(`/api/albums/${file.album_id}`);
             if (albumData) {
               albumTitle = albumData.title || albumTitle;
-              const { users } = await apiFetch(`/api/admin/users?supervisor_id=${user.id}`);
+              const { users } = await apiFetch(
+                `/api/admin/users?supervisor_id=${user.id}`,
+              );
               const match = users.find((u: any) => u.id === albumData.user_id);
-              userEmail = match?.email || albumData.user_id || "—";
+              userEmail = match?.email || albumData.user_id || '—';
             }
           } catch {}
 
@@ -105,20 +121,30 @@ function QuarantineContent() {
             ...file,
             user_email: userEmail,
             album_title: albumTitle,
-            stego_entropy: meta.stego_entropy || meta.lsb_ratio_ones ? Math.round(meta.lsb_ratio_ones * 100) : file.stego_entropy,
-            stego_detected: meta.lsb_anomaly || meta.chi_square_anomaly || meta.dct_anomaly || file.stego_detected,
-             lsb_ratio_ones: meta.lsb_ratio_ones,
-             chi_square_p_value: meta.chi_square_p_value,
-             dct_variance_proxy: meta.dct_variance_proxy,
-             structure_result: meta.details || meta.structure || null,
+            stego_entropy:
+              meta.stego_entropy || meta.lsb_ratio_ones
+                ? Math.round(meta.lsb_ratio_ones * 100)
+                : file.stego_entropy,
+            stego_detected:
+              meta.lsb_anomaly ||
+              meta.chi_square_anomaly ||
+              meta.dct_anomaly ||
+              file.stego_detected,
+            lsb_ratio_ones: meta.lsb_ratio_ones,
+            chi_square_p_value: meta.chi_square_p_value,
+            dct_variance_proxy: meta.dct_variance_proxy,
+            structure_result: meta.details || meta.structure || null,
             pdf_javascript: meta.pdf_javascript || false,
-            analysis_logs: logs
+            analysis_logs: logs,
           });
         }
       } catch (err: any) {
-        console.error("Error loading file data", err);
-        if (err.message?.includes("403") || err.message?.includes("Access Denied")) {
-           router.push("/dashboard");
+        console.error('Error loading file data', err);
+        if (
+          err.message?.includes('403') ||
+          err.message?.includes('Access Denied')
+        ) {
+          router.push('/dashboard');
         }
       } finally {
         setLoading(false);
@@ -127,36 +153,56 @@ function QuarantineContent() {
     loadData();
   }, [fileId, router]);
 
-  const openDecisionModal = (action: "approve" | "reject") => {
-    setDecisionReason("");
+  const openDecisionModal = (action: 'approve' | 'reject') => {
+    setDecisionReason('');
     setDecisionModal({ action });
   };
 
   const closeDecisionModal = () => {
     setDecisionModal(null);
-    setDecisionReason("");
+    setDecisionReason('');
   };
 
   const handleDecision = async () => {
     if (!fileData || !supervisorId || !decisionModal) return;
     try {
-      await fileService.decideFile(fileData.id, supervisorId, decisionModal.action, decisionReason.trim());
-      window.location.href = "/supervisor";
+      await fileService.decideFile(
+        fileData.id,
+        supervisorId,
+        decisionModal.action,
+        decisionReason.trim(),
+      );
+      window.location.href = '/supervisor';
     } catch (err) {
       console.error(`Failed to ${decisionModal.action} file:`, err);
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center p-20"><span className="material-symbols-outlined animate-spin text-primary text-4xl">refresh</span></div>;
+    return (
+      <div className="flex justify-center p-20">
+        <span className="material-symbols-outlined animate-spin text-primary text-4xl">
+          refresh
+        </span>
+      </div>
+    );
   }
 
   if (!fileData) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-center">
-        <span className="material-symbols-outlined text-4xl text-error mb-4">error</span>
-        <h2 className="font-headline-md text-headline-md">Archivo no encontrado</h2>
-        <Link href="/supervisor" className="mt-4 text-primary-container hover:underline">Volver a Aprobaciones</Link>
+        <span className="material-symbols-outlined text-4xl text-error mb-4">
+          error
+        </span>
+        <h2 className="font-headline-md text-headline-md">
+          Archivo no encontrado
+        </h2>
+        <Link
+          href="/supervisor"
+          className="mt-4 text-primary-container hover:underline"
+        >
+          Volver a Aprobaciones
+        </Link>
       </div>
     );
   }
@@ -166,30 +212,52 @@ function QuarantineContent() {
       {/* Header Section */}
       <div className="col-span-1 md:col-span-12 flex flex-col md:flex-row justify-between items-start md:items-end mb-md gap-md">
         <div>
-          <h2 className="font-display-lg text-display-lg text-on-background mb-unit">Reporte de Análisis</h2>
-          <p className="font-body-lg text-body-lg text-secondary">El contenido marcado requiere revisión manual.</p>
+          <h2 className="font-display-lg text-display-lg text-on-background mb-unit">
+            Reporte de Análisis
+          </h2>
+          <p className="font-body-lg text-body-lg text-secondary">
+            El contenido marcado requiere revisión manual.
+          </p>
         </div>
         <div className="flex items-center gap-sm bg-[#F0F0F0] px-4 py-2 rounded-full">
-          <span className="material-symbols-outlined text-secondary text-lg">warning</span>
-          <span className="font-label-md text-label-md text-on-surface">Prioridad Alta</span>
+          <span className="material-symbols-outlined text-secondary text-lg">
+            warning
+          </span>
+          <span className="font-label-md text-label-md text-on-surface">
+            Prioridad Alta
+          </span>
         </div>
       </div>
 
       {/* Image Container (Left Column) */}
       <div className="col-span-1 md:col-span-7 flex flex-col gap-md">
         <div className="relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] group flex justify-center items-center min-h-[400px]">
-          {fileData.type === "pdf" ? (
-            <iframe src={`${fileData.preview_url || fileData.url}#view=FitH&toolbar=0&navpanes=0`} className="w-full h-[600px] border-0" title="PDF Preview"></iframe>
+          {fileData.type === 'pdf' ? (
+            <iframe
+              src={`${fileData.preview_url || fileData.url}#view=FitH&toolbar=0&navpanes=0`}
+              className="w-full h-[600px] border-0"
+              title="PDF Preview"
+            ></iframe>
           ) : (
-            <img className="w-full h-auto object-contain max-h-[618px]" src={fileData.preview_url || fileData.url} alt="Flagged Content" />
+            <img
+              className="w-full h-auto object-contain max-h-[618px]"
+              src={fileData.preview_url || fileData.url}
+              alt="Flagged Content"
+            />
           )}
           {/* Overlay Actions */}
           <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-white transition-colors shadow-sm cursor-pointer">
               <span className="material-symbols-outlined text-xl">zoom_in</span>
             </button>
-            <a href={fileData.url} download className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-white transition-colors shadow-sm cursor-pointer">
-              <span className="material-symbols-outlined text-xl">download</span>
+            <a
+              href={fileData.url}
+              download
+              className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-white transition-colors shadow-sm cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl">
+                download
+              </span>
             </a>
           </div>
         </div>
@@ -202,118 +270,188 @@ function QuarantineContent() {
           {/* Metric 1 */}
           <div className="bg-surface-container-lowest p-md rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-sm hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.06)] transition-shadow">
             <div className="flex items-center gap-2 text-secondary">
-              <span className="material-symbols-outlined text-sm">analytics</span>
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Entropía</span>
+              <span className="material-symbols-outlined text-sm">
+                analytics
+              </span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider">
+                Entropía
+              </span>
             </div>
-            <div className="font-headline-md text-headline-md text-error">{fileData.stego_entropy?.toFixed(1) || 'N/A'}%</div>
+            <div className="font-headline-md text-headline-md text-error">
+              {fileData.stego_entropy?.toFixed(1) || 'N/A'}%
+            </div>
             <div className="w-full bg-[#F0F0F0] rounded-full h-1 mt-auto">
-              <div className="bg-error h-1 rounded-full" style={{ width: `${fileData.stego_entropy || 0}%` }}></div>
+              <div
+                className="bg-error h-1 rounded-full"
+                style={{ width: `${fileData.stego_entropy || 0}%` }}
+              ></div>
             </div>
           </div>
-          
+
           {/* Metric 2 */}
           <div className="bg-surface-container-lowest p-md rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-sm hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.06)] transition-shadow">
             <div className="flex items-center gap-2 text-secondary">
               <span className="material-symbols-outlined text-sm">flag</span>
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Detección</span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider">
+                Detección
+              </span>
             </div>
             <div className="font-headline-sm text-headline-sm text-on-surface leading-tight">
-              {fileData.type === 'pdf' ? (fileData.pdf_javascript ? 'JS Malicioso en PDF' : 'PDF Sospechoso') : (fileData.stego_detected ? 'Esteganografía LSB' : 'Datos Anómalos')}
+              {fileData.type === 'pdf'
+                ? fileData.pdf_javascript
+                  ? 'JS Malicioso en PDF'
+                  : 'PDF Sospechoso'
+                : fileData.stego_detected
+                  ? 'Esteganografía LSB'
+                  : 'Datos Anómalos'}
             </div>
           </div>
-          
+
           {/* Metric 3 */}
           <div className="bg-surface-container-lowest p-md rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-sm col-span-2">
             <div className="flex items-center gap-2 text-secondary mb-unit">
-              <span className="material-symbols-outlined text-sm">fingerprint</span>
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Firmas de Archivo</span>
+              <span className="material-symbols-outlined text-sm">
+                fingerprint
+              </span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider">
+                Firmas de Archivo
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div>
-                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Propietario</span>
-                <span className="font-body-sm text-body-sm text-on-surface block truncate" title={fileData.user_email}>{fileData.user_email || "—"}</span>
-              </div>
-              <div>
-                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Tipo de Archivo</span>
-                <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
-                  {fileData.type === "pdf" ? "PDF" : fileData.type === "image" ? "Imagen" : fileData.type?.toUpperCase()}
+                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">
+                  Propietario
+                </span>
+                <span
+                  className="font-body-sm text-body-sm text-on-surface block truncate"
+                  title={fileData.user_email}
+                >
+                  {fileData.user_email || '—'}
                 </span>
               </div>
-                <div>
-                  <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Álbum</span>
-                  <span className="font-body-sm text-body-sm text-on-surface block truncate" title={fileData.album_title}>{fileData.album_title || "—"}</span>
-                </div>
-                <div>
-                  <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Estado</span>
-                  <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
-                    {fileData.status === "quarantined" ? "Cuarentena" : fileData.status || "—"}
-                  </span>
-                </div>
+              <div>
+                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">
+                  Tipo de Archivo
+                </span>
+                <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
+                  {fileData.type === 'pdf'
+                    ? 'PDF'
+                    : fileData.type === 'image'
+                      ? 'Imagen'
+                      : fileData.type?.toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">
+                  Álbum
+                </span>
+                <span
+                  className="font-body-sm text-body-sm text-on-surface block truncate"
+                  title={fileData.album_title}
+                >
+                  {fileData.album_title || '—'}
+                </span>
+              </div>
+              <div>
+                <span className="block font-label-sm text-label-sm text-secondary mb-0.5">
+                  Estado
+                </span>
+                <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
+                  {fileData.status === 'quarantined'
+                    ? 'Cuarentena'
+                    : fileData.status || '—'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-          {/* Technical Metrics */}
-          <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
-            <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">Señales Técnicas (RF03)</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-white/80 rounded-lg px-4 py-3">
-                <p className="text-xs text-secondary uppercase tracking-wide">LSB ratio</p>
-                <p className="text-base font-semibold text-on-surface">
-                  {typeof fileData.lsb_ratio_ones === "number" ? fileData.lsb_ratio_ones.toFixed(4) : "N/A"}
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg px-4 py-3">
-                <p className="text-xs text-secondary uppercase tracking-wide">Chi-square p</p>
-                <p className="text-base font-semibold text-on-surface">
-                  {typeof fileData.chi_square_p_value === "number" ? fileData.chi_square_p_value.toFixed(4) : "N/A"}
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg px-4 py-3">
-                <p className="text-xs text-secondary uppercase tracking-wide">DCT variance</p>
-                <p className="text-base font-semibold text-on-surface">
-                  {typeof fileData.dct_variance_proxy === "number" ? fileData.dct_variance_proxy.toFixed(2) : "N/A"}
-                </p>
-              </div>
+        {/* Technical Metrics */}
+        <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
+          <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">
+            Señales Técnicas
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white/80 rounded-lg px-4 py-3">
+              <p className="text-xs text-secondary uppercase tracking-wide">
+                LSB ratio
+              </p>
+              <p className="text-base font-semibold text-on-surface">
+                {typeof fileData.lsb_ratio_ones === 'number'
+                  ? fileData.lsb_ratio_ones.toFixed(4)
+                  : 'N/A'}
+              </p>
             </div>
-            <div className="text-xs text-secondary">Valores anómalos pueden indicar esteganografía o manipulación de frecuencias.</div>
+            <div className="bg-white/80 rounded-lg px-4 py-3">
+              <p className="text-xs text-secondary uppercase tracking-wide">
+                Chi-square p
+              </p>
+              <p className="text-base font-semibold text-on-surface">
+                {typeof fileData.chi_square_p_value === 'number'
+                  ? fileData.chi_square_p_value.toFixed(4)
+                  : 'N/A'}
+              </p>
+            </div>
+            <div className="bg-white/80 rounded-lg px-4 py-3">
+              <p className="text-xs text-secondary uppercase tracking-wide">
+                DCT variance
+              </p>
+              <p className="text-base font-semibold text-on-surface">
+                {typeof fileData.dct_variance_proxy === 'number'
+                  ? fileData.dct_variance_proxy.toFixed(2)
+                  : 'N/A'}
+              </p>
+            </div>
           </div>
+          <div className="text-xs text-secondary">
+            Valores anómalos pueden indicar esteganografía o manipulación de
+            frecuencias.
+          </div>
+        </div>
 
         {/* Details Section */}
         <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
-          <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">Registros de Análisis</h3>
+          <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">
+            Registros de Análisis
+          </h3>
           <div className="space-y-4">
-            {fileData.analysis_logs?.length ? fileData.analysis_logs.map((log, idx) => (
-              <div key={idx} className="flex items-start gap-3">
-                <span className={`material-symbols-outlined ${idx === 0 ? 'text-error' : 'text-[#0079b6]'} text-lg mt-1`}>
-                  {idx === 0 ? 'error' : 'info'}
-                </span>
-                <p className="font-body-md text-body-md text-on-surface">{log}</p>
-              </div>
-            )) : (
-              <p className="text-secondary font-body-sm text-body-sm">No se registraron eventos de análisis adicionales.</p>
+            {fileData.analysis_logs?.length ? (
+              fileData.analysis_logs.map((log, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <span
+                    className={`material-symbols-outlined ${idx === 0 ? 'text-error' : 'text-[#0079b6]'} text-lg mt-1`}
+                  >
+                    {idx === 0 ? 'error' : 'info'}
+                  </span>
+                  <p className="font-body-md text-body-md text-on-surface">
+                    {log}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-secondary font-body-sm text-body-sm">
+                No se registraron eventos de análisis adicionales.
+              </p>
             )}
-          </div>
-          <div className="mt-sm flex flex-wrap gap-2">
-            <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">
-              #{fileData.type === 'pdf' ? 'pdf-sospechoso' : 'esteganografía'}
-            </span>
-            <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#revision-manual</span>
-            <span className="px-3 py-1 bg-surface-dim rounded-full font-label-sm text-label-sm text-primary">#alta-prioridad</span>
-              {fileData.lsb_ratio_ones !== undefined && <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#lsb</span>}
-              {fileData.chi_square_p_value !== undefined && <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#chi-square</span>}
-              {fileData.dct_variance_proxy !== undefined && <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#dct</span>}
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-sm mt-auto">
-          <button onClick={() => openDecisionModal("reject")} className="w-full bg-primary-container text-on-primary py-4 rounded-full font-label-md text-label-md hover:bg-surface-tint transition-colors shadow-[0_4px_14px_0_rgba(230,0,35,0.2)] flex items-center justify-center gap-2 cursor-pointer">
+          <button
+            onClick={() => openDecisionModal('reject')}
+            className="w-full bg-primary-container text-on-primary py-4 rounded-full font-label-md text-label-md hover:bg-surface-tint transition-colors shadow-[0_4px_14px_0_rgba(230,0,35,0.2)] flex items-center justify-center gap-2 cursor-pointer"
+          >
             <span className="material-symbols-outlined text-lg">block</span>
             Rechazar Archivo
           </button>
-          <button onClick={() => openDecisionModal("approve")} className="w-full bg-[#F0F0F0] text-on-surface py-4 rounded-full font-label-md text-label-md hover:bg-[#E5E5E5] transition-colors flex items-center justify-center gap-2 cursor-pointer">
-            <span className="material-symbols-outlined text-lg">check_circle</span>
+          <button
+            onClick={() => openDecisionModal('approve')}
+            className="w-full bg-[#F0F0F0] text-on-surface py-4 rounded-full font-label-md text-label-md hover:bg-[#E5E5E5] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-lg">
+              check_circle
+            </span>
             Aprobar (Falso Positivo)
           </button>
         </div>
@@ -323,7 +461,8 @@ function QuarantineContent() {
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-[min(92vw,520px)] min-w-[280px] bg-surface-container-lowest rounded-2xl shadow-[0_20px_60px_-25px_rgba(0,0,0,0.4)] p-6">
             <h3 className="font-headline-sm text-headline-sm text-on-surface mb-2">
-              {decisionModal.action === "approve" ? "Aprobar" : "Rechazar"} archivo
+              {decisionModal.action === 'approve' ? 'Aprobar' : 'Rechazar'}{' '}
+              archivo
             </h3>
             <p className="text-secondary text-sm mb-4">Motivo (opcional)</p>
             <textarea
@@ -342,7 +481,7 @@ function QuarantineContent() {
               </button>
               <button
                 onClick={handleDecision}
-                className={`px-4 py-2 rounded-full text-white transition-colors cursor-pointer ${decisionModal.action === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+                className={`px-4 py-2 rounded-full text-white transition-colors cursor-pointer ${decisionModal.action === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
               >
                 Confirmar
               </button>
@@ -359,7 +498,7 @@ export default function Quarantine() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/");
+    router.push('/');
   };
 
   return (
@@ -369,22 +508,45 @@ export default function Quarantine() {
         <div className="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <Link href="/supervisor">
-              <span className="material-symbols-outlined text-[#E60023] text-2xl cursor-pointer">arrow_back</span>
+              <span className="material-symbols-outlined text-[#E60023] text-2xl cursor-pointer">
+                arrow_back
+              </span>
             </Link>
-            <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter font-display-lg">SecureFrame</h1>
+            <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter font-display-lg">
+              SecureFrame
+            </h1>
           </div>
           <nav className="flex items-center gap-6">
-            <Link href="/supervisor" className="text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md">Aprobaciones</Link>
-            <span className="text-zinc-900 bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md">Análisis de Cuarentena</span>
+            <Link
+              href="/supervisor"
+              className="text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md"
+            >
+              Aprobaciones
+            </Link>
+            <span className="text-zinc-900 bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md">
+              Análisis de Cuarentena
+            </span>
           </nav>
-          <button onClick={handleLogout} className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer" title="Cerrar sesión">
+          <button
+            onClick={handleLogout}
+            className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer"
+            title="Cerrar sesión"
+          >
             <span className="material-symbols-outlined">logout</span>
           </button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-container-margin py-lg">
-        <Suspense fallback={<div className="flex justify-center p-20"><span className="material-symbols-outlined animate-spin text-primary text-4xl">refresh</span></div>}>
+        <Suspense
+          fallback={
+            <div className="flex justify-center p-20">
+              <span className="material-symbols-outlined animate-spin text-primary text-4xl">
+                refresh
+              </span>
+            </div>
+          }
+        >
           <QuarantineContent />
         </Suspense>
       </main>
@@ -398,7 +560,12 @@ export default function Quarantine() {
             </button>
           </Link>
           <button className="text-zinc-900 scale-110 p-3 transition-all duration-300 ease-out cursor-pointer flex flex-col items-center justify-center">
-            <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>admin_panel_settings</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              admin_panel_settings
+            </span>
           </button>
         </div>
       </nav>

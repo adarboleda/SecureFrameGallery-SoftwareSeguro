@@ -31,5 +31,12 @@ export const fileService = {
       method: "PATCH",
       body: JSON.stringify({ supervisor_id: supervisorId, action, reason })
     });
+  },
+
+  // Owner: delete a file from their own album
+  async deleteFile(fileId: string) {
+    return await apiFetch(`/api/files/${fileId}`, {
+      method: "DELETE",
+    });
   }
 };

@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { albumService } from "@/services/album.service";
-import { fileService } from "@/services/file.service";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { albumService } from '@/services/album.service';
+import { fileService } from '@/services/file.service';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 interface Album {
   id: string;
   title: string;
   description: string;
   created_at: string;
-  preview_url?: string;   // primera imagen del álbum
+  preview_url?: string; // primera imagen del álbum
   owner_name?: string;
 }
 
@@ -28,7 +28,7 @@ export default function PublicGallery() {
   const [files, setFiles] = useState<FileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [filesLoading, setFilesLoading] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [lightbox, setLightbox] = useState<FileData | null>(null);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
@@ -48,12 +48,14 @@ export default function PublicGallery() {
         rawAlbums.map(async (alb) => {
           try {
             const res = await fileService.getPublicFiles(alb.id);
-            const imgs = (res.files || []).filter((f: FileData) => f.type === "image");
+            const imgs = (res.files || []).filter(
+              (f: FileData) => f.type === 'image',
+            );
             return { ...alb, preview_url: imgs[0]?.url || null };
           } catch {
             return alb;
           }
-        })
+        }),
       );
       setAlbums(enriched);
     } catch (err) {
@@ -88,11 +90,14 @@ export default function PublicGallery() {
     router.refresh();
   };
 
-  const filtered = albums.filter(
-    (a) =>
-      a.title.toLowerCase().includes(search.toLowerCase()) ||
-      a.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = albums.filter((a) => {
+    const q = search.toLowerCase();
+    return (
+      a.title.toLowerCase().includes(q) ||
+      (a.description?.toLowerCase() ?? '').includes(q) ||
+      (a.owner_name?.toLowerCase() ?? '').includes(q)
+    );
+  });
 
   return (
     <div className="bg-background text-on-background font-body-md antialiased min-h-screen">
@@ -100,21 +105,32 @@ export default function PublicGallery() {
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_2px_20px_-5px_rgba(0,0,0,0.07)]">
         <div className="flex items-center gap-4 px-6 py-3.5 max-w-7xl mx-auto">
           {/* Logo */}
-          <span className="text-[#E60023] font-bold text-xl tracking-tighter shrink-0">SecureFrame</span>
+          <span className="text-[#E60023] font-bold text-xl tracking-tighter shrink-0">
+            SecureFrame
+          </span>
 
-          {/* Search */}
-          <div className="flex-1 max-w-xl mx-auto flex items-center bg-zinc-100 rounded-full h-11 px-4 gap-2">
-            <span className="material-symbols-outlined text-secondary text-[20px]">search</span>
+          {/* Contenedor de búsqueda */}
+          <div className="flex-1 w-full max-w-xl mx-auto flex items-center bg-zinc-100 rounded-full h-11 px-4 gap-2 min-w-[270px]">
+            <span className="material-symbols-outlined text-secondary text-[20px] shrink-0">
+              search
+            </span>
+
             <input
               className="bg-transparent border-none outline-none w-full text-sm text-on-surface placeholder:text-secondary"
-              placeholder="Buscar álbumes..."
+              placeholder="Buscar por álbum o usuario..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+
             {search && (
-              <button onClick={() => setSearch("")} className="text-secondary hover:text-on-surface cursor-pointer">
-                <span className="material-symbols-outlined text-[18px]">close</span>
+              <button
+                onClick={() => setSearch('')}
+                className="text-secondary hover:text-on-surface cursor-pointer shrink-0"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  close
+                </span>
               </button>
             )}
           </div>
@@ -165,9 +181,13 @@ export default function PublicGallery() {
               <span className="text-sm font-medium">Volver a álbumes</span>
             </button>
           </div>
-          <h1 className="font-bold text-3xl text-on-background mb-1">{selectedAlbum.title}</h1>
+          <h1 className="font-bold text-3xl text-on-background mb-1">
+            {selectedAlbum.title}
+          </h1>
           {selectedAlbum.owner_name ? (
-            <p className="text-secondary mb-2">Por {selectedAlbum.owner_name}</p>
+            <p className="text-secondary mb-2">
+              Por {selectedAlbum.owner_name}
+            </p>
           ) : null}
           {selectedAlbum.description && (
             <p className="text-secondary mb-8">{selectedAlbum.description}</p>
@@ -175,13 +195,19 @@ export default function PublicGallery() {
 
           {filesLoading ? (
             <div className="py-24 flex flex-col items-center gap-4 text-secondary">
-              <span className="material-symbols-outlined animate-spin text-4xl text-[#E60023]">refresh</span>
+              <span className="material-symbols-outlined animate-spin text-4xl text-[#E60023]">
+                refresh
+              </span>
               <p>Cargando contenido...</p>
             </div>
           ) : files.length === 0 ? (
             <div className="py-24 flex flex-col items-center gap-4 border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
-              <span className="material-symbols-outlined text-6xl opacity-30">image_not_supported</span>
-              <p className="text-base">Este álbum aún no tiene archivos públicos.</p>
+              <span className="material-symbols-outlined text-6xl opacity-30">
+                image_not_supported
+              </span>
+              <p className="text-base">
+                Este álbum aún no tiene archivos públicos.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -192,10 +218,17 @@ export default function PublicGallery() {
                   onClick={() => setLightbox(file)}
                 >
                   <div className="rounded-2xl overflow-hidden aspect-square relative shadow-[0_4px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.13)] transition-all duration-300 bg-surface-container">
-                    {file.type === "pdf" ? (
+                    {file.type === 'pdf' ? (
                       <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-red-50">
-                        <span className="material-symbols-outlined text-5xl text-[#E60023]" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>
-                        <span className="text-xs text-red-700 font-medium">PDF</span>
+                        <span
+                          className="material-symbols-outlined text-5xl text-[#E60023]"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          picture_as_pdf
+                        </span>
+                        <span className="text-xs text-red-700 font-medium">
+                          PDF
+                        </span>
                       </div>
                     ) : (
                       <img
@@ -206,7 +239,7 @@ export default function PublicGallery() {
                     )}
                     <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                       <span className="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                        {file.type === "pdf" ? "Ver PDF" : "Ver imagen"}
+                        {file.type === 'pdf' ? 'Ver PDF' : 'Ver imagen'}
                       </span>
                     </div>
                   </div>
@@ -219,20 +252,35 @@ export default function PublicGallery() {
         /* ──────────────────── ALBUMS GRID ──────────────────── */
         <main className="pt-20 pb-16 px-6 max-w-7xl mx-auto">
           <div className="pt-8 mb-6">
-            <h1 className="font-bold text-3xl text-on-background mb-1">Galería Pública</h1>
-            <p className="text-secondary">Explora las colecciones de la comunidad SecureFrame.</p>
+            <h1 className="font-bold text-3xl text-on-background mb-1">
+              Galería Pública
+            </h1>
+            <p className="text-secondary">
+              Explora las colecciones de la comunidad SecureFrame.
+            </p>
           </div>
 
           {loading ? (
             <div className="py-24 flex flex-col items-center gap-4">
-              <span className="material-symbols-outlined animate-spin text-4xl text-[#E60023]">refresh</span>
+              <span className="material-symbols-outlined animate-spin text-4xl text-[#E60023]">
+                refresh
+              </span>
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-24 flex flex-col items-center gap-4 border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
-              <span className="material-symbols-outlined text-6xl opacity-30">photo_library</span>
-              <p className="text-base">{search ? "No se encontraron álbumes con esa búsqueda." : "Aún no hay álbumes públicos disponibles."}</p>
+              <span className="material-symbols-outlined text-6xl opacity-30">
+                photo_library
+              </span>
+              <p className="text-base">
+                {search
+                  ? 'No se encontraron álbumes con esa búsqueda.'
+                  : 'Aún no hay álbumes públicos disponibles.'}
+              </p>
               {search && (
-                <button onClick={() => setSearch("")} className="text-[#E60023] text-sm font-medium cursor-pointer hover:underline">
+                <button
+                  onClick={() => setSearch('')}
+                  className="text-[#E60023] text-sm font-medium cursor-pointer hover:underline"
+                >
                   Limpiar búsqueda
                 </button>
               )}
@@ -256,7 +304,9 @@ export default function PublicGallery() {
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-secondary opacity-40">
-                          <span className="material-symbols-outlined text-5xl">photo_library</span>
+                          <span className="material-symbols-outlined text-5xl">
+                            photo_library
+                          </span>
                         </div>
                       )}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center pb-4">
@@ -267,15 +317,24 @@ export default function PublicGallery() {
                     </div>
                     {/* Info */}
                     <div className="p-4">
-                      <h2 className="font-bold text-base text-on-surface truncate mb-1">{album.title}</h2>
+                      <h2 className="font-bold text-base text-on-surface truncate mb-1">
+                        {album.title}
+                      </h2>
                       {album.owner_name ? (
-                        <p className="font-body-sm text-body-sm text-secondary mt-2">Por {album.owner_name}</p>
+                        <p className="font-body-sm text-body-sm text-secondary mt-2">
+                          Por {album.owner_name}
+                        </p>
                       ) : null}
                       {album.description ? (
-                        <p className="text-secondary text-sm line-clamp-2">{album.description}</p>
+                        <p className="text-secondary text-sm line-clamp-2">
+                          {album.description}
+                        </p>
                       ) : null}
                       <p className="text-xs text-secondary mt-2">
-                        {new Date(album.created_at).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })}
+                        {new Date(album.created_at).toLocaleDateString(
+                          'es-CO',
+                          { year: 'numeric', month: 'long', day: 'numeric' },
+                        )}
                       </p>
                     </div>
                   </div>
@@ -298,8 +357,11 @@ export default function PublicGallery() {
           >
             <span className="material-symbols-outlined">close</span>
           </button>
-          <div onClick={(e) => e.stopPropagation()} className="max-w-4xl w-full max-h-[90vh]">
-            {lightbox.type === "pdf" ? (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-4xl w-full max-h-[90vh]"
+          >
+            {lightbox.type === 'pdf' ? (
               <iframe
                 src={`${lightbox.url}#view=FitH&toolbar=1`}
                 className="w-full h-[80vh] rounded-2xl border-0 bg-white"
