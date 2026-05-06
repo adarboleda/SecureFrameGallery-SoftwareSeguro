@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { fileService } from "@/services/file.service";
+import { apiFetch } from "@/services/api";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
@@ -24,6 +25,10 @@ interface FileAnalysis {
   pdf_details?: string[];
   analysis_logs?: string[];
   analysis_metadata?: any;
+  lsb_ratio_ones?: number;
+  chi_square_p_value?: number;
+  dct_variance_proxy?: number;
+  structure_result?: string;
 }
 
 function QuarantineContent() {
@@ -87,16 +92,12 @@ function QuarantineContent() {
           let userEmail = "—";
           let albumTitle = file.album_id?.substring(0, 12) + "…";
           try {
-            const albumRes = await fetch(`http://localhost:8000/api/albums/${file.album_id}`);
-            if (albumRes.ok) {
-              const albumData = await albumRes.json();
+            const albumData = await apiFetch(`/api/albums/${file.album_id}`);
+            if (albumData) {
               albumTitle = albumData.title || albumTitle;
-              const usersRes = await fetch(`http://localhost:8000/api/admin/users?supervisor_id=${user.id}`);
-              if (usersRes.ok) {
-                const { users } = await usersRes.json();
-                const match = users.find((u: any) => u.id === albumData.user_id);
-                userEmail = match?.email || albumData.user_id || "—";
-              }
+              const { users } = await apiFetch(`/api/admin/users?supervisor_id=${user.id}`);
+              const match = users.find((u: any) => u.id === albumData.user_id);
+              userEmail = match?.email || albumData.user_id || "—";
             }
           } catch {}
 
@@ -106,6 +107,10 @@ function QuarantineContent() {
             album_title: albumTitle,
             stego_entropy: meta.stego_entropy || meta.lsb_ratio_ones ? Math.round(meta.lsb_ratio_ones * 100) : file.stego_entropy,
             stego_detected: meta.lsb_anomaly || meta.chi_square_anomaly || meta.dct_anomaly || file.stego_detected,
+             lsb_ratio_ones: meta.lsb_ratio_ones,
+             chi_square_p_value: meta.chi_square_p_value,
+             dct_variance_proxy: meta.dct_variance_proxy,
+             structure_result: meta.details || meta.structure || null,
             pdf_javascript: meta.pdf_javascript || false,
             analysis_logs: logs
           });
@@ -234,9 +239,45 @@ function QuarantineContent() {
                   {fileData.type === "pdf" ? "PDF" : fileData.type === "image" ? "Imagen" : fileData.type?.toUpperCase()}
                 </span>
               </div>
+                <div>
+                  <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Álbum</span>
+                  <span className="font-body-sm text-body-sm text-on-surface block truncate" title={fileData.album_title}>{fileData.album_title || "—"}</span>
+                </div>
+                <div>
+                  <span className="block font-label-sm text-label-sm text-secondary mb-0.5">Estado</span>
+                  <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
+                    {fileData.status === "quarantined" ? "Cuarentena" : fileData.status || "—"}
+                  </span>
+                </div>
             </div>
           </div>
         </div>
+
+          {/* Technical Metrics */}
+          <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
+            <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">Señales Técnicas (RF03)</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-white/80 rounded-lg px-4 py-3">
+                <p className="text-xs text-secondary uppercase tracking-wide">LSB ratio</p>
+                <p className="text-base font-semibold text-on-surface">
+                  {typeof fileData.lsb_ratio_ones === "number" ? fileData.lsb_ratio_ones.toFixed(4) : "N/A"}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg px-4 py-3">
+                <p className="text-xs text-secondary uppercase tracking-wide">Chi-square p</p>
+                <p className="text-base font-semibold text-on-surface">
+                  {typeof fileData.chi_square_p_value === "number" ? fileData.chi_square_p_value.toFixed(4) : "N/A"}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg px-4 py-3">
+                <p className="text-xs text-secondary uppercase tracking-wide">DCT variance</p>
+                <p className="text-base font-semibold text-on-surface">
+                  {typeof fileData.dct_variance_proxy === "number" ? fileData.dct_variance_proxy.toFixed(2) : "N/A"}
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-secondary">Valores anómalos pueden indicar esteganografía o manipulación de frecuencias.</div>
+          </div>
 
         {/* Details Section */}
         <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
@@ -259,6 +300,9 @@ function QuarantineContent() {
             </span>
             <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#revision-manual</span>
             <span className="px-3 py-1 bg-surface-dim rounded-full font-label-sm text-label-sm text-primary">#alta-prioridad</span>
+              {fileData.lsb_ratio_ones !== undefined && <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#lsb</span>}
+              {fileData.chi_square_p_value !== undefined && <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#chi-square</span>}
+              {fileData.dct_variance_proxy !== undefined && <span className="px-3 py-1 bg-[#F0F0F0] rounded-full font-label-sm text-label-sm text-on-surface">#dct</span>}
           </div>
         </div>
 
