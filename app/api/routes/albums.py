@@ -21,6 +21,78 @@ async def get_my_albums(request: Request, user_id: str | None = None):
     response = supabase_admin.table("albums").select("*").eq("user_id", auth_user_id).execute()
     return response.data
 
+
+@router.get("/approved-history")
+async def get_approved_history(request: Request):
+    """
+    Retorna el historial de álbumes y archivos aprobados del usuario autenticado,
+    enriquecidos con el email del supervisor que tomó la decisión desde decision_audit.
+    """
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+
+    # Álbumes aprobados del usuario
+    albums_resp = supabase_admin.table("albums") \
+        .select("id, title, description, created_at, privacy") \
+        .eq("user_id", auth_user_id) \
+        .eq("status", "approved") \
+        .order("created_at", desc=True) \
+        .execute()
+
+    approved_albums = []
+    for album in albums_resp.data or []:
+        # Buscar la entrada de auditoría más reciente para este álbum (acción approve)
+        audit_resp = supabase_admin.table("decision_audit") \
+            .select("supervisor_id, action, reason, created_at") \
+            .eq("entity_id", album["id"]) \
+            .eq("entity_type", "album") \
+            .eq("action", "approve") \
+            .order("created_at", desc=True) \
+            .limit(1) \
+            .execute()
+
+        supervisor_email = None
+        audit_reason = None
+        approved_at = None
+
+        if audit_resp.data:
+            audit = audit_resp.data[0]
+            audit_reason = audit.get("reason")
+            approved_at = audit.get("created_at")
+            supervisor_id = audit.get("supervisor_id")
+            if supervisor_id:
+                try:
+                    user_resp = supabase_admin.auth.admin.get_user_by_id(supervisor_id)
+                    if hasattr(user_resp, "user") and user_resp.user:
+                        supervisor_email = user_resp.user.email
+                    elif isinstance(user_resp, dict):
+                        supervisor_email = (user_resp.get("user") or {}).get("email")
+                except Exception:
+                    supervisor_email = None
+
+        # Archivos limpios del álbum
+        files_resp = supabase_admin.table("files") \
+            .select("id, file_type, created_at, status") \
+            .eq("album_id", album["id"]) \
+            .eq("user_id", auth_user_id) \
+            .eq("status", "clean") \
+            .execute()
+
+        approved_albums.append({
+            "id": album["id"],
+            "title": album["title"],
+            "description": album["description"],
+            "privacy": album["privacy"],
+            "created_at": album["created_at"],
+            "approved_at": approved_at,
+            "supervisor_email": supervisor_email,
+            "audit_reason": audit_reason,
+            "clean_files_count": len(files_resp.data or []),
+        })
+
+    return {"approved_albums": approved_albums}
+
+
 @router.patch("/{album_id}/privacy")
 async def update_album_privacy(request: Request, album_id: str, privacy: str):
     """
@@ -40,6 +112,8 @@ async def update_album_privacy(request: Request, album_id: str, privacy: str):
     if not update_response.data:
         raise HTTPException(status_code=403, detail="No tienes permisos para actualizar este álbum.")
     return {"message": "Privacidad actualizada.", "data": update_response.data}
+
+
 @router.post("/request")
 @limiter.limit("10/minute")
 async def request_album(request: Request, album: AlbumCreate):
@@ -52,7 +126,7 @@ async def request_album(request: Request, album: AlbumCreate):
     # Desinfección de Inputs
     clean_title = bleach.clean(album.title, tags=[], strip=True)
     clean_description = bleach.clean(album.description, tags=[], strip=True)
-    
+
     # Insertar en base de datos
     response = supabase.table("albums").insert({
         "user_id": auth_user_id,
@@ -61,8 +135,9 @@ async def request_album(request: Request, album: AlbumCreate):
         "privacy": album.privacy,
         "status": "pending"
     }).execute()
-    
+
     return {"message": "Álbum solicitado. Pendiente de revisión por un supervisor.", "data": response.data}
+
 
 @router.get("/{album_id}")
 async def get_album_detail(request: Request, album_id: str):
@@ -79,3 +154,4 @@ async def get_album_detail(request: Request, album_id: str):
     if not response.data:
         raise HTTPException(status_code=404, detail="Álbum no encontrado.")
     return response.data[0]
+

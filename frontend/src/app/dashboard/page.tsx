@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { albumService } from "@/services/album.service";
-import { apiFetch } from "@/services/api";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { albumService } from '@/services/album.service';
+import { apiFetch } from '@/services/api';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Album {
   id: string;
@@ -18,48 +19,52 @@ interface Album {
   preview_url?: string | null;
 }
 
+// ── Component ──────────────────────────────────────────────────────────────────
+
 export default function Dashboard() {
   const router = useRouter();
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [loading, setLoading] = useState(true);
+
   const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("Usuario");
+  const [userName, setUserName] = useState<string>('Usuario');
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [albumsLoading, setAlbumsLoading] = useState(true);
   const [updatingPrivacyId, setUpdatingPrivacyId] = useState<string | null>(null);
+
+  // ── Init ────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        router.push("/login");
+        router.push('/login');
         return;
       }
-      
-      // Verificar rol: si es supervisor redirigir al panel correcto
+
       const roleRes = await apiFetch(`/api/auth/role/${user.id}`);
-      if (roleRes) {
-        const { role } = roleRes;
-        if (role === "supervisor") {
-          router.replace("/supervisor");
-          return;
-        }
+      if (roleRes?.role === 'supervisor') {
+        router.replace('/supervisor');
+        return;
       }
-      
+
       setUserId(user.id);
-      setUserName(user.user_metadata?.username || user.email?.split("@")[0] || "Usuario");
+      setUserName(
+        user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario',
+      );
     }
     loadUser();
   }, [router]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
+  // ── Load albums ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (!userId) return;
+
     async function loadAlbums() {
-      if (!userId) return;
       try {
-        const albumsData = await albumService.getMyAlbums(userId);
+        const albumsData = await albumService.getMyAlbums(userId!);
         const rawAlbums: Album[] = albumsData || [];
 
         const { data: sessionData } = await supabase.auth.getSession();
@@ -71,35 +76,69 @@ export default function Dashboard() {
               const res = await fetch(
                 `http://localhost:8000/api/public/albums/${album.id}/my-files?user_id=${userId}`,
                 {
-                  headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                }
+                  headers: token
+                    ? { Authorization: `Bearer ${token}` }
+                    : undefined,
+                },
               );
               if (!res.ok) return { ...album, preview_url: null };
               const json = await res.json();
-              const files = (json.files || []).filter((file: any) => file.type === "image");
-              const clean = files.find((file: any) => file.status === "clean");
-              return { ...album, preview_url: (clean || files[0])?.url || null };
+              const images = (json.files || []).filter(
+                (f: any) => f.type === 'image',
+              );
+              const clean = images.find((f: any) => f.status === 'clean');
+              return { ...album, preview_url: (clean || images[0])?.url ?? null };
             } catch {
               return { ...album, preview_url: null };
             }
-          })
+          }),
         );
 
         setAlbums(enriched);
       } catch (err) {
-        console.error("Error al cargar álbumes", err);
+        console.error('Error al cargar álbumes', err);
       } finally {
-        setLoading(false);
+        setAlbumsLoading(false);
       }
     }
+
     loadAlbums();
   }, [userId]);
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
+  const handlePrivacyChange = async (
+    albumId: string,
+    privacy: 'public' | 'private',
+  ) => {
+    if (updatingPrivacyId) return;
+    try {
+      setUpdatingPrivacyId(albumId);
+      await albumService.updateAlbumPrivacy(albumId, privacy);
+      setAlbums((prev) =>
+        prev.map((a) => (a.id === albumId ? { ...a, privacy } : a)),
+      );
+    } catch (err) {
+      console.error('Error al actualizar privacidad', err);
+    } finally {
+      setUpdatingPrivacyId(null);
+    }
+  };
+
+  // ── Derived stats ──────────────────────────────────────────────────────────
+
   const stats = {
     total: albums.length,
-    approved: albums.filter(a => a.status === 'approved').length,
-    pending: albums.filter(a => a.status === 'pending').length,
+    approved: albums.filter((a) => a.status === 'approved').length,
+    pending: albums.filter((a) => a.status === 'pending').length,
   };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24 md:pb-0 pt-20">
@@ -111,17 +150,28 @@ export default function Dashboard() {
               <span className="material-symbols-outlined">potted_plant</span>
             </button>
           </Link>
-          <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter antialiased">SecureFrame</h1>
+          <h1 className="text-[#E60023] font-bold text-2xl tracking-tighter antialiased">
+            SecureFrame
+          </h1>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-full px-4 py-2">
-              <span className="material-symbols-outlined text-secondary text-[18px]">person</span>
-              <span className="font-label-md text-label-md text-secondary truncate max-w-[180px]">{userName}</span>
+              <span className="material-symbols-outlined text-secondary text-[18px]">
+                person
+              </span>
+              <span className="font-label-md text-label-md text-secondary truncate max-w-[180px]">
+                {userName}
+              </span>
             </div>
-            <button onClick={handleLogout} className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer" title="Cerrar sesión">
+            <button
+              onClick={handleLogout}
+              className="h-10 w-10 rounded-full bg-surface-variant overflow-hidden flex items-center justify-center hover:bg-red-50 text-on-surface hover:text-red-500 transition-colors duration-200 cursor-pointer"
+              title="Cerrar sesión"
+            >
               <span className="material-symbols-outlined">logout</span>
             </button>
           </div>
         </div>
+
         {/* Desktop Navigation */}
         <nav className="hidden md:flex justify-center gap-8 py-3 border-t border-zinc-100">
           <Link href="/">
@@ -132,7 +182,12 @@ export default function Dashboard() {
           </Link>
           <Link href="/dashboard">
             <div className="flex flex-col items-center gap-1 text-zinc-900 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-xl cursor-pointer">
-              <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>person</span>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                person
+              </span>
               <span className="font-label-md text-label-md">Perfil</span>
             </div>
           </Link>
@@ -145,108 +200,162 @@ export default function Dashboard() {
         </nav>
       </header>
 
-      {/* Main Content Canvas */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-container-margin py-lg mt-8">
         {/* Welcome Section */}
         <section className="mb-xl text-center md:text-left">
-          <h2 className="font-display-lg text-display-lg text-on-surface mb-2">Bienvenido de vuelta, {userName}</h2>
-          <p className="font-body-lg text-body-lg text-on-surface-variant">Aquí tienes un resumen de tu portafolio creativo.</p>
+          <h2 className="font-display-lg text-display-lg text-on-surface mb-2">
+            Bienvenido de vuelta, {userName}
+          </h2>
+          <p className="font-body-lg text-body-lg text-on-surface-variant">
+            Aquí tienes un resumen de tu portafolio creativo.
+          </p>
         </section>
 
         {/* Stats Bento Grid */}
         <section className="grid grid-cols-2 md:grid-cols-3 gap-grid-gutter mb-xl">
           <div className="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
-            <span className="material-symbols-outlined text-primary-container mb-md text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>photo_library</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface">{stats.total}</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Total de Álbumes</p>
+            <span
+              className="material-symbols-outlined text-primary-container mb-md text-3xl"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              photo_library
+            </span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">
+              {stats.total}
+            </h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+              Total de Álbumes
+            </p>
           </div>
           <div className="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
-            <span className="material-symbols-outlined text-tertiary-container mb-md text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>check_circle</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface">{stats.approved}</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Aprobados</p>
+            <span
+              className="material-symbols-outlined text-tertiary-container mb-md text-3xl"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              check_circle
+            </span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">
+              {stats.approved}
+            </h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+              Aprobados
+            </p>
           </div>
           <div className="bg-surface-container-lowest rounded-lg p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center md:items-start">
-            <span className="material-symbols-outlined text-secondary mb-md text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>pending</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface">{stats.pending}</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Pendientes</p>
+            <span
+              className="material-symbols-outlined text-secondary mb-md text-3xl"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              pending
+            </span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">
+              {stats.pending}
+            </h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+              Pendientes
+            </p>
           </div>
         </section>
 
-        {/* Recent Albums Section */}
+        {/* Albums Section */}
         <section>
           <div className="flex justify-between items-end mb-6">
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">Álbumes Recientes</h2>
-            <Link href="/albums/new" className="font-label-md text-label-md text-primary-container hover:underline cursor-pointer">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">
+              Álbumes Recientes
+            </h2>
+            <Link
+              href="/albums/new"
+              className="font-label-md text-label-md text-primary-container hover:underline cursor-pointer"
+            >
               Crear Nuevo
             </Link>
           </div>
-          
-          {loading ? (
-            <div className="flex justify-center p-20"><span className="material-symbols-outlined animate-spin">refresh</span></div>
+
+          {albumsLoading ? (
+            <div className="flex justify-center p-20">
+              <span className="material-symbols-outlined animate-spin">
+                refresh
+              </span>
+            </div>
           ) : albums.length === 0 ? (
             <div className="text-center py-20 text-on-surface-variant border border-dashed border-outline-variant rounded-xl">
-              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">folder_open</span>
+              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">
+                folder_open
+              </span>
               <p>Aún no tienes ningún álbum.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {albums.map((album) => (
-                <div key={album.id} className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] group relative border border-transparent hover:border-primary-container/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.1)]">
+                <div
+                  key={album.id}
+                  className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] group relative border border-transparent hover:border-primary-container/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.1)]"
+                >
+                  {/* Status badge */}
                   <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-                      <span className={`w-2 h-2 rounded-full ${
-                        album.status === 'approved' ? 'bg-green-500' :
-                        album.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}></span>
-                      <span className="font-label-sm text-label-sm text-zinc-800">
-                        {album.status === 'approved' ? 'Aprobado' : album.status === 'pending' ? 'Pendiente' : 'Rechazado'}
-                      </span>
-                    </div>
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        album.status === 'approved'
+                          ? 'bg-green-500'
+                          : album.status === 'pending'
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                      }`}
+                    />
+                    <span className="font-label-sm text-label-sm text-zinc-800">
+                      {album.status === 'approved'
+                        ? 'Aprobado'
+                        : album.status === 'pending'
+                          ? 'Pendiente'
+                          : 'Rechazado'}
+                    </span>
+                  </div>
+
+                  {/* Privacy toggle */}
                   <div className="absolute top-4 left-4 z-20">
                     <div className="bg-white/90 backdrop-blur-sm p-1 rounded-full shadow-sm flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={async (event) => {
-                          event.stopPropagation();
-                          event.preventDefault();
-                          if (updatingPrivacyId || album.privacy === "public") return;
-                          try {
-                            setUpdatingPrivacyId(album.id);
-                            await albumService.updateAlbumPrivacy(album.id, "public");
-                            setAlbums((prev) => prev.map((item) => item.id === album.id ? { ...item, privacy: "public" } : item));
-                          } catch (err) {
-                            console.error("Error al actualizar privacidad", err);
-                          } finally {
-                            setUpdatingPrivacyId(null);
-                          }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (album.privacy !== 'public')
+                            handlePrivacyChange(album.id, 'public');
                         }}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${album.privacy === "public" ? "bg-[#E60023] text-white" : "text-zinc-700 hover:bg-white"}`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                          album.privacy === 'public'
+                            ? 'bg-[#E60023] text-white'
+                            : 'text-zinc-700 hover:bg-white'
+                        }`}
                       >
-                        <span className="material-symbols-outlined text-[14px]">public</span>
+                        <span className="material-symbols-outlined text-[14px]">
+                          public
+                        </span>
                         Público
                       </button>
                       <button
                         type="button"
-                        onClick={async (event) => {
-                          event.stopPropagation();
-                          event.preventDefault();
-                          if (updatingPrivacyId || album.privacy === "private") return;
-                          try {
-                            setUpdatingPrivacyId(album.id);
-                            await albumService.updateAlbumPrivacy(album.id, "private");
-                            setAlbums((prev) => prev.map((item) => item.id === album.id ? { ...item, privacy: "private" } : item));
-                          } catch (err) {
-                            console.error("Error al actualizar privacidad", err);
-                          } finally {
-                            setUpdatingPrivacyId(null);
-                          }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (album.privacy !== 'private')
+                            handlePrivacyChange(album.id, 'private');
                         }}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${album.privacy === "private" ? "bg-[#E60023] text-white" : "text-zinc-700 hover:bg-white"}`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                          album.privacy === 'private'
+                            ? 'bg-[#E60023] text-white'
+                            : 'text-zinc-700 hover:bg-white'
+                        }`}
                       >
-                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                        <span className="material-symbols-outlined text-[14px]">
+                          lock
+                        </span>
                         Privado
                       </button>
                     </div>
                   </div>
+
                   <Link href={`/albums/${album.id}`} className="block cursor-pointer">
                     <div className="p-0 bg-surface-container flex items-center justify-center aspect-[4/3] overflow-hidden">
                       {album.preview_url ? (
@@ -257,12 +366,18 @@ export default function Dashboard() {
                           loading="lazy"
                         />
                       ) : (
-                        <span className="material-symbols-outlined text-5xl text-secondary opacity-20">photo_library</span>
+                        <span className="material-symbols-outlined text-5xl text-secondary opacity-20">
+                          photo_library
+                        </span>
                       )}
                     </div>
                     <div className="p-5">
-                      <h3 className="font-headline-sm text-headline-sm text-on-surface mb-1.5 truncate">{album.title}</h3>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">{album.description}</p>
+                      <h3 className="font-headline-sm text-headline-sm text-on-surface mb-1.5 truncate">
+                        {album.title}
+                      </h3>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+                        {album.description}
+                      </p>
                     </div>
                   </Link>
                 </div>
@@ -288,7 +403,12 @@ export default function Dashboard() {
             </button>
           </Link>
           <button className="text-zinc-900 scale-110 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center">
-            <span className="material-symbols-outlined text-[28px]" style={{fontVariationSettings: "'FILL' 1"}}>person</span>
+            <span
+              className="material-symbols-outlined text-[28px]"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              person
+            </span>
             <span className="text-[10px]">Perfil</span>
           </button>
         </div>

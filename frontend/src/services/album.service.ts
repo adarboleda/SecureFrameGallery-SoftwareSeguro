@@ -4,12 +4,16 @@ import { supabase } from "@/lib/supabase";
 export const albumService = {
   // Public
   async getPublicAlbums() {
-    return await apiFetch("/api/public/albums");
+    return await apiFetch('/api/public/albums');
   },
 
   // User
   async getMyAlbums(userId: string) {
     return await apiFetch(`/api/albums/my?user_id=${userId}`);
+  },
+
+  async getApprovedHistory() {
+    return await apiFetch('/api/albums/approved-history');
   },
 
   async requestAlbum(userId: string, title: string, description: string, privacy: string = "public") {
