@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fileService } from "@/services/file.service";
 import { albumService } from "@/services/album.service";
+import { apiFetch } from "@/services/api";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
@@ -55,16 +56,13 @@ export default function SupervisorDashboard() {
         }
 
         // Verificar que sea supervisor
-        const roleRes = await fetch(`http://localhost:8000/api/auth/role/${user.id}`);
-        if (roleRes.ok) {
-          const { role } = await roleRes.json();
+        const roleRes = await apiFetch(`/api/auth/role/${user.id}`);
+        if (roleRes) {
+          const { role } = roleRes;
           if (role !== "supervisor") {
             router.replace("/dashboard");
             return;
           }
-        } else {
-          router.push("/login");
-          return;
         }
 
         setSupervisorId(user.id);
@@ -81,9 +79,7 @@ export default function SupervisorDashboard() {
           // Enrich with user info from admin endpoint
           const enriched = await Promise.all(rawAlbums.map(async (alb) => {
             try {
-              const usersRes = await fetch(`http://localhost:8000/api/admin/users?supervisor_id=${user.id}`);
-              if (!usersRes.ok) return alb;
-              const { users } = await usersRes.json();
+              const { users } = await apiFetch(`/api/admin/users?supervisor_id=${user.id}`);
               const match = users.find((u: any) => u.id === alb.user_id);
               return { ...alb, user_email: match?.email || alb.user_id, user_name: match?.username || "" };
             } catch { return alb; }
@@ -94,13 +90,11 @@ export default function SupervisorDashboard() {
           const rawFiles: QuarantinedFile[] = filesData.value?.quarantined_files || filesData.value || [];
           // Enrich with album title and user email
           try {
-            const usersRes = await fetch(`http://localhost:8000/api/admin/users?supervisor_id=${user.id}`);
-            const { users } = usersRes.ok ? await usersRes.json() : { users: [] };
+            const { users } = await apiFetch(`/api/admin/users?supervisor_id=${user.id}`);
             // Fetch album info for each file
             const enrichedFiles = await Promise.all(rawFiles.map(async (f) => {
               try {
-                const albumRes = await fetch(`http://localhost:8000/api/albums/${f.album_id}?supervisor_id=${user.id}`);
-                const albumData = albumRes.ok ? await albumRes.json() : null;
+                const albumData = await apiFetch(`/api/albums/${f.album_id}?supervisor_id=${user.id}`);
                 const albumTitle = albumData?.title || albumData?.album?.title || null;
                 const ownerId = albumData?.user_id || albumData?.album?.user_id || null;
                 const ownerMatch = users.find((u: any) => u.id === ownerId);
@@ -338,7 +332,7 @@ export default function SupervisorDashboard() {
               <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
                 {quarantineSlice.map((file) => (
                   <article key={file.id} className="break-inside-avoid bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col">
-                    <div className="relative w-full aspect-[4/5] bg-surface-container-high">
+                    <div className="relative w-full aspect-[4/3] bg-surface-container-high">
                       {(file.file_type === "pdf" || file.type === "pdf") ? (
                         <div className="w-full h-full flex items-center justify-center bg-surface-container-high">
                           <span className="material-symbols-outlined text-6xl text-secondary">picture_as_pdf</span>

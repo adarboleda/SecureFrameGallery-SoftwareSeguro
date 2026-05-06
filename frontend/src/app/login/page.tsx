@@ -39,10 +39,7 @@ export default function Login() {
         throw new Error('Credenciales inválidas.');
 
       // Consultar el rol del usuario al backend
-      const roleRes = await fetch(
-        `http://localhost:8000/api/auth/role/${userId}`,
-      );
-      const roleData = await roleRes.json();
+      const roleData = await apiFetch(`/api/auth/role/${userId}`);
 
       // Redirigir según el rol
       if (roleData.role === 'supervisor') {

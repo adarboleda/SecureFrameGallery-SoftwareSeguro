@@ -65,12 +65,17 @@ async def request_album(request: Request, album: AlbumCreate):
     return {"message": "Álbum solicitado. Pendiente de revisión por un supervisor.", "data": response.data}
 
 @router.get("/{album_id}")
-async def get_album_detail(album_id: str):
+async def get_album_detail(request: Request, album_id: str):
     """
     Obtiene detalles de un álbum por su ID (para uso interno del supervisor).
     """
-    from fastapi import HTTPException
-    response = supabase.table("albums").select("*").eq("id", album_id).execute()
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+    user_profile = supabase_admin.table("profiles").select("role").eq("id", auth_user_id).execute()
+    if not user_profile.data or user_profile.data[0]["role"] != "supervisor":
+        raise HTTPException(status_code=403, detail="Access Denied: Requiere rol de Supervisor.")
+
+    response = supabase_admin.table("albums").select("*").eq("id", album_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Álbum no encontrado.")
     return response.data[0]

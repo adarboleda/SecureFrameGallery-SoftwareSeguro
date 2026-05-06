@@ -23,14 +23,7 @@ export const fileService = {
   // Supervisor
   async getQuarantinedFiles(supervisorId: string) {
     const data = await apiFetch(`/api/supervisor/quarantine?supervisor_id=${supervisorId}`);
-    
-    // Obtener URLs temporales seguras (Signed URLs) para la previsualización del supervisor
-    const filesWithUrl = await Promise.all((data.quarantined_files || []).map(async (file: any) => {
-      const { data: urlData } = await supabase.storage.from("secure-gallery-images").createSignedUrl(file.storage_path, 60);
-      return { ...file, preview_url: urlData?.signedUrl };
-    }));
-    
-    return filesWithUrl;
+    return data.quarantined_files || [];
   },
 
   async decideFile(fileId: string, supervisorId: string, action: "approve" | "reject", reason?: string) {

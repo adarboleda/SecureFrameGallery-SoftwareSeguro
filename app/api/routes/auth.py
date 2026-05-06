@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Request, HTTPException
-from app.services.supabase_client import supabase
+from app.services.supabase_client import supabase, supabase_admin
 from app.models.schemas import UserRegister
-from app.core.security import limiter
+from app.core.security import limiter, get_authenticated_user, get_user_id
 
 router = APIRouter()
 
@@ -128,11 +128,16 @@ def _reset_login_attempts(email: str) -> None:
     }).eq("email", email).execute()
 
 @router.get("/role/{user_id}")
-async def get_user_role(user_id: str):
+async def get_user_role(request: Request, user_id: str):
     """
     Retorna el rol del usuario especificado consultando la tabla profiles.
     """
-    response = supabase.table("profiles").select("role").eq("id", user_id).execute()
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+    if user_id != auth_user_id:
+        raise HTTPException(status_code=403, detail="User mismatch.")
+
+    response = supabase_admin.table("profiles").select("role").eq("id", user_id).execute()
     if not response.data:
         return {"role": "user"}
     return {"role": response.data[0]["role"]}

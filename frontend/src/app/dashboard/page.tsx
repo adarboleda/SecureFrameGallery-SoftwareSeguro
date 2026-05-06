@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { albumService } from "@/services/album.service";
+import { apiFetch } from "@/services/api";
 
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -34,9 +35,9 @@ export default function Dashboard() {
       }
       
       // Verificar rol: si es supervisor redirigir al panel correcto
-      const roleRes = await fetch(`http://localhost:8000/api/auth/role/${user.id}`);
-      if (roleRes.ok) {
-        const { role } = await roleRes.json();
+      const roleRes = await apiFetch(`/api/auth/role/${user.id}`);
+      if (roleRes) {
+        const { role } = roleRes;
         if (role === "supervisor") {
           router.replace("/supervisor");
           return;

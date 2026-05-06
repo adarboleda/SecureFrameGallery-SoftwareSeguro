@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/services/api";
 
 interface ManagedUser {
   id: string;
@@ -27,19 +28,15 @@ export default function UserManagement() {
       if (!user) { router.push("/login"); return; }
 
       // Verify supervisor role
-      const roleRes = await fetch(`http://localhost:8000/api/auth/role/${user.id}`);
-      if (!roleRes.ok) { router.push("/login"); return; }
-      const { role } = await roleRes.json();
+      const roleRes = await apiFetch(`/api/auth/role/${user.id}`);
+      const { role } = roleRes;
       if (role !== "supervisor") { router.replace("/dashboard"); return; }
 
       setSupervisorId(user.id);
       setSupervisorEmail(user.email || "Supervisor");
 
-      const res = await fetch(`http://localhost:8000/api/admin/users?supervisor_id=${user.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data.users || []);
-      }
+      const data = await apiFetch(`/api/admin/users?supervisor_id=${user.id}`);
+      setUsers(data.users || []);
       setLoading(false);
     }
     loadData();
