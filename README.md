@@ -179,8 +179,9 @@ El motor de análisis aplica **tres técnicas complementarias** para imágenes y
    script-src 'self' 'unsafe-eval' 'unsafe-inline'; 
    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
    font-src 'self' https://fonts.gstatic.com data:; 
-   connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://*.supabase.co;
+   connect-src 'self' ${NEXT_PUBLIC_API_URL} https://*.supabase.co;
    ```
+   El `connect-src` es **dinámico**: en desarrollo incluye `localhost:8000`, en producción solo apunta a la URL configurada en `NEXT_PUBLIC_API_URL` (ej: Render).
 2. **X-Content-Type-Options: nosniff** — previene ataques de confusión de tipo MIME tanto en el backend (`public.py`) como en el frontend (Next.js headers).
 3. **CORS restrictivo** en FastAPI (`main.py`) — configurado con `allow_origins` para controlar orígenes autorizados.
 4. **CSP adicional en endpoints públicos**: El router `/api/public` inyecta cabeceras adicionales de seguridad en las respuestas del backend.
@@ -353,10 +354,11 @@ uvicorn app.main:app --reload
 📚 Documentación interactiva (Swagger): **http://localhost:8000/docs**  
 📖 Documentación alternativa (ReDoc): **http://localhost:8000/redoc**
 
-> **Nota para Windows**: Si `python-magic` da error, instala también `python-magic-bin`:
+> **Nota para Windows (desarrollo local)**: Si `python-magic` da error, instala también `python-magic-bin`:
 > ```bash
 > pip install python-magic-bin
 > ```
+> Esta dependencia es **solo para Windows en local**. En producción (Render/Linux) se usa `python-magic` directamente.
 
 ---
 
@@ -451,7 +453,8 @@ supabase
 passlib[argon2]
 bleach
 slowapi
-python-magic
+python-magic          # usa python-magic-bin en Windows local
+filetype
 pillow
 numpy
 scipy
