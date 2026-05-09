@@ -30,6 +30,7 @@ export default function AlbumWorkspace({
     ok: boolean;
   } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -147,6 +148,12 @@ export default function AlbumWorkspace({
         label: 'En cuarentena',
         color: 'bg-red-500',
         text: 'text-red-700',
+      };
+    if (s === 'rejected')
+      return {
+        label: 'Rechazado',
+        color: 'bg-red-800',
+        text: 'text-red-900',
       };
     return {
       label: 'Procesando',
@@ -292,20 +299,18 @@ export default function AlbumWorkspace({
                             Toca para abrir PDF
                           </span>
                         </div>
+                      ) : imageErrors[file.id] ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-surface-container-high text-secondary">
+                          <span className="material-symbols-outlined text-4xl">broken_image</span>
+                          <span className="text-xs font-medium text-center px-2">No disponible</span>
+                        </div>
                       ) : (
                         <img
                           src={file.url}
                           alt="Archivo subido"
                           className="w-full h-full object-cover"
                           loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              'none';
-                            (
-                              e.target as HTMLImageElement
-                            ).parentElement!.innerHTML +=
-                              '<div class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-secondary"><span class="material-symbols-outlined text-4xl">broken_image</span><span class="text-xs">No disponible</span></div>';
-                          }}
+                          onError={() => setImageErrors(prev => ({ ...prev, [file.id]: true }))}
                         />
                       )}
                       {/* Overlay on hover: view + delete */}

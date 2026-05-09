@@ -100,11 +100,13 @@ async def get_public_files(album_id: str, response: Response):
             signed_url = extract_signed_url(signed_response)
         except Exception:
             signed_url = ""
+        file_name = file["storage_path"].split("/")[-1] if file.get("storage_path") else ""
         result_files.append({
             "id": file["id"],
             "url": signed_url or public_url,
             "type": file["file_type"],
-            "created_at": file["created_at"]
+            "created_at": file["created_at"],
+            "name": file_name
         })
         
     return {"files": result_files}
