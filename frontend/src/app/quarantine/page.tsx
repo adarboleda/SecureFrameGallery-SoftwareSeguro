@@ -647,7 +647,7 @@ export default function Quarantine() {
               href="/supervisor"
               className="text-zinc-500 hover:bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md"
             >
-              Aprobaciones
+              Historial
             </Link>
             <span className="text-zinc-900 bg-zinc-100 transition-colors duration-200 px-4 py-2 rounded-full font-label-md text-label-md">
               Análisis de Cuarentena
