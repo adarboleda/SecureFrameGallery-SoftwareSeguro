@@ -179,57 +179,111 @@ def analyze_pdf_security(file_bytes: bytes) -> dict:
     """
     Analiza un PDF en busca de patrones maliciosos reales.
     Optimizado para evitar Falsos Positivos de archivos exportados desde MS Word/LibreOffice.
+
+    NOTA DE COMPATIBILIDAD: fitz.LINK_JAVASCRIPT fue eliminada en PyMuPDF >= 1.24.
+    Se usa el valor numérico histórico (5) con getattr como fallback seguro.
+    Cada bloque de detección tiene su propio try/except para que un fallo en uno
+    no silenciosamente cancele los demás.
     """
     is_suspicious = False
     details = []
-    
+    embedded_count = 0
+    embedded_names: list[str] = []
+
+    # Constante LINK_JAVASCRIPT: eliminada en PyMuPDF >= 1.24, era el valor 5.
+    LINK_JAVASCRIPT = getattr(fitz, "LINK_JAVASCRIPT", 5)
+
+    doc = None
     try:
-        # CORRECCIÓN 1: Sintaxis explícita y segura para leer bytes desde la memoria RAM.
-        # Evita el error de "cannot open file 'pdf'"
+        # Abrir desde memoria RAM para evitar el error "cannot open file 'pdf'"
         doc = fitz.open(stream=file_bytes, filetype="pdf")
-        
-        # 1. Buscar JavaScript en enlaces
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            links = page.get_links()
-            for link in links:
-                if link.get("kind") == fitz.LINK_JAVASCRIPT:
-                    is_suspicious = True
-                    details.append(f"JavaScript embebido detectado en un enlace de la página {page_num+1}.")
-        
-        # 2. Buscar JavaScript en widgets/formularios
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            try:
-                widgets = page.widgets()
-                if widgets:
-                    for widget in widgets:
-                        if widget.script:
-                            is_suspicious = True
-                            details.append(f"JavaScript en widget (Formulario) detectado en la página {page_num+1}.")
-            except Exception:
-                pass  # Ignoramos fallos al leer widgets
-                    
-        # 3. Archivos embebidos ocultos
-        if doc.embedded_file_count() > 0:
-            is_suspicious = True
-            details.append(f"El PDF contiene {doc.embedded_file_count()} archivo(s) oculto(s) embebido(s).")
-            
-        doc.close()
-        
     except Exception as e:
         error_msg = str(e).lower()
-        
-        # CORRECCIÓN 2: Eliminamos "cannot open" y "invalid xref" de la lista negra.
-        # Solo marcaremos como ataque si el archivo está encriptado (protegido con contraseña) 
-        # o catastróficamente malformado (evidencia de manipulación hexadecimal directa).
         if any(kw in error_msg for kw in ["encrypted", "malformed"]):
             is_suspicious = True
             details.append(f"Estructura del PDF potencialmente manipulada: {str(e)}")
-            
+        # Si no se pudo abrir, aún verificamos los bytes crudos más abajo
+
+    if doc is not None:
+        # 1. Buscar JavaScript en enlaces (cada página en su propio try para mayor robustez)
+        try:
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                links = page.get_links()
+                for link in links:
+                    # Detectar por kind numérico y también por esquema URI javascript:
+                    link_kind = link.get("kind")
+                    link_uri = str(link.get("uri") or "").lower()
+                    if link_kind == LINK_JAVASCRIPT or link_uri.startswith("javascript:"):
+                        is_suspicious = True
+                        details.append(
+                            f"JavaScript embebido detectado en un enlace de la página {page_num+1}."
+                        )
+        except Exception:
+            pass  # No bloqueamos el resto del análisis por un fallo en links
+
+        # 2. Buscar JavaScript en widgets/formularios
+        try:
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                try:
+                    widgets = page.widgets()
+                    if widgets:
+                        for widget in widgets:
+                            if widget.script:
+                                is_suspicious = True
+                                details.append(
+                                    f"JavaScript en widget (Formulario) detectado en la página {page_num+1}."
+                                )
+                except Exception:
+                    pass  # Ignoramos fallos al leer widgets de una página
+        except Exception:
+            pass
+
+        # 3. Archivos embebidos ocultos (compatibilidad entre versiones PyMuPDF)
+        try:
+            if hasattr(doc, "embfile_names"):
+                embedded_names = doc.embfile_names() or []
+                embedded_count = len(embedded_names)
+        except Exception:
+            embedded_names = []
+            embedded_count = 0
+
+        if embedded_count == 0:
+            try:
+                if hasattr(doc, "embfile_count"):
+                    embedded_count = int(doc.embfile_count() or 0)
+                elif hasattr(doc, "embedded_file_count"):
+                    embedded_count = int(doc.embedded_file_count() or 0)
+            except Exception:
+                embedded_count = 0
+
+        doc.close()
+
+    # 4. Fallback de bytes crudos si la API de fitz no detectó nada
+    if embedded_count == 0:
+        try:
+            if b"/EmbeddedFiles" in file_bytes or b"/EmbeddedFile" in file_bytes:
+                embedded_count = 1
+        except Exception:
+            embedded_count = 0
+
+    if embedded_count > 0:
+        is_suspicious = True
+        if embedded_names:
+            details.append(
+                "Archivos embebidos detectados: " + ", ".join(embedded_names)
+            )
+        else:
+            details.append(
+                f"El PDF contiene {embedded_count} archivo(s) oculto(s) embebido(s)."
+            )
+
     return {
         "is_suspicious": bool(is_suspicious),
-        "pdf_details": details
+        "pdf_details": details,
+        "embedded_count": int(embedded_count),
+        "pdf_has_embedded": bool(embedded_count > 0)
     }
 
 def strip_exif(img: Image.Image) -> Image.Image:

@@ -5,12 +5,7 @@ def embed_hidden_file(input_path: str, output_path: str) -> None:
     doc = fitz.open(input_path)
 
     payload = b"Hidden file injected for testing."
-    doc.embfile_add(
-        name="hidden.txt",
-        buffer=payload,
-        filename="hidden.txt",
-        desc="Embedded test payload"
-    )
+    doc.embfile_add("hidden.txt", payload, "hidden.txt", "Embedded test payload")
 
     doc.save(output_path)
     doc.close()

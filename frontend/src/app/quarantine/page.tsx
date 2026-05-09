@@ -119,6 +119,7 @@ function QuarantineContent() {
 
           setFileData({
             ...file,
+            type: file.file_type || file.type,
             user_email: userEmail,
             album_title: albumTitle,
             stego_entropy:
@@ -207,6 +208,12 @@ function QuarantineContent() {
     );
   }
 
+  const isPdf =
+    fileData.type === 'pdf' ||
+    fileData.type === 'application/pdf' ||
+    fileData.type?.toLowerCase?.().includes('pdf');
+  const previewSrc = fileData.preview_url || fileData.url || '';
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-lg">
       {/* Header Section */}
@@ -232,16 +239,16 @@ function QuarantineContent() {
       {/* Image Container (Left Column) */}
       <div className="col-span-1 md:col-span-7 flex flex-col gap-md">
         <div className="relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] group flex justify-center items-center min-h-[400px]">
-          {fileData.type === 'pdf' ? (
+          {isPdf ? (
             <iframe
-              src={`${fileData.preview_url || fileData.url}#view=FitH&toolbar=0&navpanes=0`}
+              src={`${previewSrc}#view=FitH&toolbar=0&navpanes=0`}
               className="w-full h-[600px] border-0"
               title="PDF Preview"
             ></iframe>
           ) : (
             <img
               className="w-full h-auto object-contain max-h-[618px]"
-              src={fileData.preview_url || fileData.url}
+              src={previewSrc}
               alt="Flagged Content"
             />
           )}
@@ -297,7 +304,7 @@ function QuarantineContent() {
               </span>
             </div>
             <div className="font-headline-sm text-headline-sm text-on-surface leading-tight">
-              {fileData.type === 'pdf'
+              {isPdf
                 ? fileData.pdf_javascript
                   ? 'JS Malicioso en PDF'
                   : 'PDF Sospechoso'
@@ -334,7 +341,7 @@ function QuarantineContent() {
                   Tipo de Archivo
                 </span>
                 <span className="font-body-md text-body-md text-on-surface uppercase font-medium">
-                  {fileData.type === 'pdf'
+                  {isPdf
                     ? 'PDF'
                     : fileData.type === 'image'
                       ? 'Imagen'
