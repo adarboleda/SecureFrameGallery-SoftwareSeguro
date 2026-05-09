@@ -35,6 +35,7 @@ function QuarantineContent() {
   const searchParams = useSearchParams();
   const fileId = searchParams.get('fileId');
   const [fileData, setFileData] = useState<FileAnalysis | null>(null);
+  const [thresholds, setThresholds] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [decisionModal, setDecisionModal] = useState<{
@@ -58,6 +59,21 @@ function QuarantineContent() {
           return;
         }
         setSupervisorId(user.id);
+
+        try {
+          const configData = await apiFetch('/api/config/thresholds');
+          if (configData && configData.image) {
+            setThresholds(configData.image);
+          } else {
+            setThresholds({
+              lsb_ratio_min: 0.498, lsb_ratio_max: 0.502, chi_p_threshold: 0.995, dct_variance_threshold: 8.0
+            });
+          }
+        } catch (e) {
+          setThresholds({
+            lsb_ratio_min: 0.498, lsb_ratio_max: 0.502, chi_p_threshold: 0.995, dct_variance_threshold: 8.0
+          });
+        }
 
         const files = await fileService.getQuarantinedFiles(user.id);
         const file = files.find((f: any) => f.id === fileId);
@@ -135,7 +151,7 @@ function QuarantineContent() {
             chi_square_p_value: meta.chi_square_p_value,
             dct_variance_proxy: meta.dct_variance_proxy,
             structure_result: meta.details || meta.structure || null,
-            pdf_javascript: meta.pdf_javascript || false,
+            pdf_javascript: meta.pdf_javascript || (meta.pdf_details?.some((d: string) => d.toLowerCase().includes('javascript'))) || false,
             analysis_logs: logs,
           });
         }
@@ -303,14 +319,23 @@ function QuarantineContent() {
                 Detección
               </span>
             </div>
-            <div className="font-headline-sm text-headline-sm text-on-surface leading-tight">
-              {isPdf
-                ? fileData.pdf_javascript
-                  ? 'JS Malicioso en PDF'
-                  : 'PDF Sospechoso'
-                : fileData.stego_detected
-                  ? 'Esteganografía LSB'
-                  : 'Datos Anómalos'}
+            <div className="mt-auto">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                isPdf 
+                  ? fileData.pdf_javascript ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                  : fileData.stego_detected ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+              }`}>
+                <span className="material-symbols-outlined text-[16px]">
+                  {isPdf ? (fileData.pdf_javascript ? 'bug_report' : 'warning') : (fileData.stego_detected ? 'bug_report' : 'warning')}
+                </span>
+                {isPdf
+                  ? fileData.pdf_javascript
+                    ? 'JS Malicioso en PDF'
+                    : 'PDF Sospechoso'
+                  : fileData.stego_detected
+                    ? 'Esteganografía LSB'
+                    : 'Datos Anómalos'}
+              </span>
             </div>
           </div>
 
@@ -373,48 +398,142 @@ function QuarantineContent() {
           </div>
         </div>
 
-        {/* Technical Metrics */}
-        <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
-          <h3 className="font-headline-sm text-headline-sm text-on-background border-b border-[#F0F0F0] pb-sm">
-            Señales Técnicas
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white/80 rounded-lg px-4 py-3">
-              <p className="text-xs text-secondary uppercase tracking-wide">
-                LSB ratio
-              </p>
-              <p className="text-base font-semibold text-on-surface">
-                {typeof fileData.lsb_ratio_ones === 'number'
-                  ? fileData.lsb_ratio_ones.toFixed(4)
-                  : 'N/A'}
-              </p>
+        {/* Technical Metrics - IMAGES */}
+        {!isPdf && thresholds && (
+          <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
+            <div className="flex justify-between items-center border-b border-[#F0F0F0] pb-sm">
+              <h3 className="font-headline-sm text-headline-sm text-on-background">Señales Técnicas (Imagen)</h3>
+              <span className="text-xs font-medium text-[#0079b6] bg-[#e6f4f1] px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">tune</span>
+                Umbrales de referencia activos
+              </span>
             </div>
-            <div className="bg-white/80 rounded-lg px-4 py-3">
-              <p className="text-xs text-secondary uppercase tracking-wide">
-                Chi-square p
-              </p>
-              <p className="text-base font-semibold text-on-surface">
-                {typeof fileData.chi_square_p_value === 'number'
-                  ? fileData.chi_square_p_value.toFixed(4)
-                  : 'N/A'}
-              </p>
-            </div>
-            <div className="bg-white/80 rounded-lg px-4 py-3">
-              <p className="text-xs text-secondary uppercase tracking-wide">
-                DCT variance
-              </p>
-              <p className="text-base font-semibold text-on-surface">
-                {typeof fileData.dct_variance_proxy === 'number'
-                  ? fileData.dct_variance_proxy.toFixed(2)
-                  : 'N/A'}
-              </p>
+            
+            <div className="flex flex-col gap-4 mt-2">
+              {/* LSB Ratio */}
+              {(() => {
+                const val = fileData.lsb_ratio_ones;
+                const isAnomalous = val != null && val > thresholds.lsb_ratio_min && val < thresholds.lsb_ratio_max;
+                return (
+                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between`}>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`material-symbols-outlined text-[20px] ${isAnomalous ? 'text-red-500' : 'text-green-600'}`}>bar_chart</span>
+                        <h4 className="font-bold text-on-surface uppercase text-sm">LSB Ratio</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase ${isAnomalous ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
+                          {isAnomalous ? 'ANÓMALO' : 'NORMAL'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-secondary">
+                        Peligro si el valor cae en el rango [{thresholds.lsb_ratio_min} - {thresholds.lsb_ratio_max}]. Fuera de este rango es seguro.
+                      </p>
+                    </div>
+                    <div className={`text-2xl font-black tracking-tight ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
+                      {val?.toFixed(4) ?? 'N/A'}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Chi-Square */}
+              {(() => {
+                const val = fileData.chi_square_p_value;
+                const isAnomalous = val != null && val > thresholds.chi_p_threshold;
+                return (
+                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between`}>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`material-symbols-outlined text-[20px] ${isAnomalous ? 'text-red-500' : 'text-green-600'}`}>functions</span>
+                        <h4 className="font-bold text-on-surface uppercase text-sm">Chi-Square p-value</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase ${isAnomalous ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
+                          {isAnomalous ? 'ANÓMALO' : 'NORMAL'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-secondary">
+                        Peligro si es mayor a {thresholds.chi_p_threshold}. Indica distribución artificial de pixeles.
+                      </p>
+                    </div>
+                    <div className={`text-2xl font-black tracking-tight ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
+                      {val?.toFixed(4) ?? 'N/A'}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* DCT Variance */}
+              {(() => {
+                const val = fileData.dct_variance_proxy;
+                const isAnomalous = val != null && val < thresholds.dct_variance_threshold;
+                return (
+                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between`}>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`material-symbols-outlined text-[20px] ${isAnomalous ? 'text-red-500' : 'text-green-600'}`}>blur_on</span>
+                        <h4 className="font-bold text-on-surface uppercase text-sm">Varianza DCT</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase ${isAnomalous ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
+                          {isAnomalous ? 'ANÓMALO' : 'NORMAL'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-secondary">
+                        Peligro si es menor a {thresholds.dct_variance_threshold}. Indica imagen artificialmente suavizada.
+                      </p>
+                    </div>
+                    <div className={`text-2xl font-black tracking-tight ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
+                      {val?.toFixed(2) ?? 'N/A'}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
-          <div className="text-xs text-secondary">
-            Valores anómalos pueden indicar esteganografía o manipulación de
-            frecuencias.
+        )}
+
+        {/* Technical Metrics - PDFs */}
+        {isPdf && (
+          <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">
+            <div className="flex justify-between items-center border-b border-[#F0F0F0] pb-sm">
+              <h3 className="font-headline-sm text-headline-sm text-on-background">Análisis de Estructura PDF</h3>
+              <span className="text-xs font-medium text-[#0079b6] bg-[#e6f4f1] px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">shield_find</span>
+                Inspección de seguridad
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+              {/* JS Box */}
+              <div className={`p-4 rounded-xl border ${fileData.pdf_javascript ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`material-symbols-outlined ${fileData.pdf_javascript ? 'text-red-600' : 'text-green-600'}`}>
+                    {fileData.pdf_javascript ? 'code_blocks' : 'code_off'}
+                  </span>
+                  <span className="font-bold text-on-surface">JavaScript Embebido</span>
+                </div>
+                <p className={`text-sm ${fileData.pdf_javascript ? 'text-red-700' : 'text-green-700'}`}>
+                  {fileData.pdf_javascript ? 'Se detectaron scripts ejecutables en el PDF. Riesgo alto de ejecución de código o XSS.' : 'No se detectaron scripts ejecutables.'}
+                </p>
+              </div>
+              
+              {/* Embedded Box */}
+              <div className={`p-4 rounded-xl border ${fileData.analysis_metadata?.embedded_count > 0 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`material-symbols-outlined ${fileData.analysis_metadata?.embedded_count > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                    {fileData.analysis_metadata?.embedded_count > 0 ? 'attachment' : 'task'}
+                  </span>
+                  <span className="font-bold text-on-surface">Archivos Ocultos</span>
+                </div>
+                <p className={`text-sm ${fileData.analysis_metadata?.embedded_count > 0 ? 'text-amber-700' : 'text-green-700'}`}>
+                  {fileData.analysis_metadata?.embedded_count > 0 
+                    ? `Se encontraron ${fileData.analysis_metadata.embedded_count} archivo(s) adjunto(s). Peligro de malware oculto (Políglotas).` 
+                    : 'No se encontraron archivos adjuntos o embebidos.'}
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-secondary mt-2 bg-surface-container-high/50 p-3 rounded-lg flex items-start gap-2">
+              <span className="material-symbols-outlined text-[16px] text-secondary mt-0.5">info</span>
+              <p>Los PDFs maliciosos suelen utilizar JavaScript y archivos embebidos (Polyglots) para esconder payloads que comprometen la máquina del usuario final.</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Details Section */}
         <div className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.03)] border border-[#F0F0F0]/50 flex flex-col gap-md">

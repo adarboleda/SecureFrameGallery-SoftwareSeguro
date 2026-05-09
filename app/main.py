@@ -5,7 +5,7 @@ from app.core.security import limiter
 from app.core.config import settings
 
 # Importamos los routers
-from app.api.routes import auth, albums, files, supervisor, public, admin
+from app.api.routes import auth, albums, files, supervisor, public, admin, config
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -37,6 +37,7 @@ app.include_router(albums.router, prefix="/api/albums", tags=["Álbumes"])
 app.include_router(files.router, prefix="/api", tags=["Archivos"]) # Dejamos el prefix /api para mantener la compatibilidad con /api/upload
 app.include_router(supervisor.router, prefix="/api/supervisor", tags=["Supervisor"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(config.router, prefix="/api/config", tags=["Configuración"])
 
 @app.get("/")
 def root():
