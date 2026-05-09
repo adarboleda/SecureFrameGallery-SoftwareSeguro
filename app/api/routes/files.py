@@ -89,12 +89,11 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
                 original_img = Image.open(io.BytesIO(contents))
                 original_img.verify() # Validate structure
                 original_img = Image.open(io.BytesIO(contents)) # Re-open after verify
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=f"Invalid image format: {str(e)}")
+                clean_img = strip_exif(original_img)
+            except Exception:
+                raise HTTPException(status_code=400, detail="El archivo de imagen está dañado o no es compatible.")
 
             structure_check = verify_image_structure(contents, mime_type)
-            
-            clean_img = strip_exif(original_img)
             
             # CONTROL DE SEGURIDAD 4: Análisis Avanzado (LSB, Chi-Square, DCT)
             analysis_result = analyze_image_steganography(clean_img)
