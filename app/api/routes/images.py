@@ -1,5 +1,8 @@
 import io
-import magic
+try:
+    import magic
+except Exception:
+    magic = None
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from PIL import Image
 from app.services.supabase_client import supabase
@@ -25,7 +28,14 @@ async def upload_secure_image(file: UploadFile = File(...), user_id: str = "demo
         raise HTTPException(status_code=400, detail="File exceeds 5MB limit.")
         
     # CONTROL DE SEGURIDAD 2: File Magic Numbers
-    mime_type = magic.from_buffer(contents, mime=True)
+    if magic is not None:
+        mime_type = magic.from_buffer(contents, mime=True)
+    else:
+        import filetype
+        kind = filetype.guess(contents)
+        if not kind:
+            raise HTTPException(status_code=400, detail="No se pudo detectar el tipo de archivo.")
+        mime_type = kind.mime
     if mime_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Invalid file signature. Only JPEG/PNG allowed.")
         
