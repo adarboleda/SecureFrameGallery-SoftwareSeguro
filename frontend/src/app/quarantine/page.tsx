@@ -12,6 +12,7 @@ interface FileAnalysis {
   id: string;
   url: string;
   type: string;
+  status?: string;
   preview_url?: string;
   album_id: string;
   user_id?: string;
