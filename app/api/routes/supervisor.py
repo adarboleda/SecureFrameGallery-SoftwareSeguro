@@ -75,74 +75,133 @@ async def resolve_album(request: Request, album_id: str, decision: Decision):
 
 
 # ==========================================
-# HISTORIAL DE APROBADOS (SUPERVISOR)
+# HISTORIAL DE DECISIONES (SUPERVISOR)
 # ==========================================
-@router.get("/approved-history")
-async def get_all_approved_history(request: Request):
+@router.get("/decision-history")
+async def get_all_decision_history(request: Request):
     """
-    Retorna todos los álbumes aprobados de todos los usuarios,
-    enriquecidos con el email del supervisor y del propietario desde decision_audit.
+    Retorna todos los álbumes y archivos aprobados y rechazados,
+    enriquecidos con el email del supervisor y del propietario.
     Solo accesible por supervisores.
     """
     auth_user = get_authenticated_user(request)
     auth_user_id = get_user_id(auth_user)
     _require_supervisor(auth_user_id)
 
-    # Todos los álbumes aprobados del sistema
+    # 1. ÁLBUMES
     albums_resp = supabase_admin.table("albums") \
-        .select("id, user_id, title, description, created_at, privacy") \
-        .eq("status", "approved") \
+        .select("id, user_id, title, description, created_at, privacy, status") \
+        .in_("status", ["approved", "rejected"]) \
         .order("created_at", desc=True) \
         .execute()
 
-    result = []
+    result_albums = []
     for album in albums_resp.data or []:
-        # Auditoría de aprobación del álbum
         audit_resp = supabase_admin.table("decision_audit") \
-            .select("supervisor_id, reason, created_at") \
+            .select("supervisor_id, action, reason, created_at") \
             .eq("entity_id", album["id"]) \
             .eq("entity_type", "album") \
-            .eq("action", "approve") \
             .order("created_at", desc=True) \
             .limit(1) \
             .execute()
 
         supervisor_email = None
         audit_reason = None
-        approved_at = None
+        decision_at = None
+        decision_action = None
 
         if audit_resp.data:
             audit = audit_resp.data[0]
             audit_reason = audit.get("reason")
-            approved_at = audit.get("created_at")
+            decision_at = audit.get("created_at")
+            decision_action = audit.get("action")
             supervisor_id = audit.get("supervisor_id")
             if supervisor_id:
                 supervisor_email = _get_user_email(supervisor_id)
 
-        # Email del propietario del álbum
         owner_email = _get_user_email(album["user_id"])
-
-        # Conteo de archivos limpios
         files_resp = supabase_admin.table("files") \
             .select("id", count="exact") \
             .eq("album_id", album["id"]) \
-            .eq("status", "clean") \
             .execute()
 
-        result.append({
+        result_albums.append({
             "id": album["id"],
             "title": album["title"],
             "description": album["description"],
             "privacy": album["privacy"],
+            "status": album["status"],
             "created_at": album["created_at"],
-            "approved_at": approved_at,
+            "decision_at": decision_at,
+            "decision_action": decision_action,
             "supervisor_email": supervisor_email,
             "owner_email": owner_email,
             "audit_reason": audit_reason,
-            "clean_files_count": files_resp.count or 0,
+            "files_count": files_resp.count or 0,
         })
 
-    return {"approved_albums": result}
+    # 2. ARCHIVOS
+    # Obtenemos primero los archivos desde decision_audit
+    file_audits = supabase_admin.table("decision_audit") \
+        .select("entity_id, supervisor_id, action, reason, created_at") \
+        .eq("entity_type", "file") \
+        .order("created_at", desc=True) \
+        .execute()
+        
+    result_files = []
+    seen_files = set()
+    
+    for audit in file_audits.data or []:
+        file_id = audit["entity_id"]
+        if file_id in seen_files:
+            continue
+        seen_files.add(file_id)
+        
+        file_resp = supabase_admin.table("files") \
+            .select("id, album_id, user_id, storage_path, file_type, status, analysis_metadata, created_at") \
+            .eq("id", file_id) \
+            .execute()
+            
+        if file_resp.data:
+            file_data = file_resp.data[0]
+            
+            # Obtener datos del álbum
+            album_resp = supabase_admin.table("albums").select("title").eq("id", file_data["album_id"]).execute()
+            album_title = album_resp.data[0]["title"] if album_resp.data else "Álbum desconocido"
+            
+            # URLs
+            preview_url = None
+            try:
+                signed = supabase_admin.storage.from_("secure-gallery-images").create_signed_url(file_data["storage_path"], 300)
+                if hasattr(signed, "signed_url"):
+                    preview_url = signed.signed_url
+                elif hasattr(signed, "data") and isinstance(signed.data, dict):
+                    preview_url = signed.data.get("signedUrl") or signed.data.get("signedURL")
+                elif isinstance(signed, dict):
+                    preview_url = signed.get("signedURL") or signed.get("signedUrl")
+            except Exception:
+                pass
+                
+            supervisor_email = _get_user_email(audit.get("supervisor_id")) if audit.get("supervisor_id") else None
+            owner_email = _get_user_email(file_data["user_id"])
+            
+            result_files.append({
+                "id": file_id,
+                "album_id": file_data["album_id"],
+                "album_title": album_title,
+                "file_type": file_data["file_type"],
+                "status": file_data["status"],
+                "preview_url": preview_url,
+                "created_at": file_data["created_at"],
+                "decision_at": audit["created_at"],
+                "decision_action": audit["action"],
+                "supervisor_email": supervisor_email,
+                "owner_email": owner_email,
+                "audit_reason": audit.get("reason"),
+                "analysis_metadata": file_data.get("analysis_metadata")
+            })
+
+    return {"history_albums": result_albums, "history_files": result_files}
 
 
 # ==========================================

@@ -82,21 +82,28 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
     try:
         if mime_type in ["image/jpeg", "image/png"]:
             file_type = "image"
+            
+            # CONTROL DE SEGURIDAD 3: EXIF Stripping & PIL Parsing
+            # PIL acts as a secondary validation.
+            try:
+                original_img = Image.open(io.BytesIO(contents))
+                original_img.verify() # Validate structure
+                original_img = Image.open(io.BytesIO(contents)) # Re-open after verify
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Invalid image format: {str(e)}")
 
             structure_check = verify_image_structure(contents, mime_type)
-            if not structure_check.get("ok", False):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid image structure: {structure_check.get('details', 'unknown')}"
-                )
-
-            original_img = Image.open(io.BytesIO(contents))
             
-            # CONTROL DE SEGURIDAD 3: EXIF Stripping
             clean_img = strip_exif(original_img)
             
             # CONTROL DE SEGURIDAD 4: Análisis Avanzado (LSB, Chi-Square, DCT)
             analysis_result = analyze_image_steganography(clean_img)
+            
+            # Si falló la validación estricta de estructura, lo agregamos a los detalles
+            # pero NO lo marcamos como sospechoso para evitar que bloquee descargas de internet legítimas.
+            # PIL ya limpió y convirtió la imagen, lo que neutraliza bytes basura al final.
+            if not structure_check.get("ok", False):
+                analysis_result["details"]["structure_anomaly"] = structure_check.get("details", "unknown")
             
             output_buffer = io.BytesIO()
             clean_img.save(output_buffer, format="PNG")
@@ -138,6 +145,8 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
         else:
             return {"message": "File uploaded and verified successfully.", "status": status}
             
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 

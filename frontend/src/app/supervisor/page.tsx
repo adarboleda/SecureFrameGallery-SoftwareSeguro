@@ -32,31 +32,51 @@ interface PendingAlbum {
   status: string;
 }
 
-interface ApprovedAlbum {
+interface DecisionHistoryAlbum {
   id: string;
   title: string;
   description: string;
   privacy: string;
+  status: string;
   created_at: string;
-  approved_at: string | null;
+  decision_at: string | null;
+  decision_action: string | null;
   supervisor_email: string | null;
   owner_email: string | null;
   audit_reason: string | null;
-  clean_files_count: number;
+  files_count: number;
+}
+
+interface DecisionHistoryFile {
+  id: string;
+  album_id: string;
+  album_title: string;
+  file_type: string;
+  status: string;
+  preview_url: string | null;
+  created_at: string;
+  decision_at: string;
+  decision_action: string;
+  supervisor_email: string | null;
+  owner_email: string | null;
+  audit_reason: string | null;
+  analysis_metadata: any;
 }
 
 export default function SupervisorDashboard() {
   const [files, setFiles] = useState<QuarantinedFile[]>([]);
   const [pendingAlbums, setPendingAlbums] = useState<PendingAlbum[]>([]);
-  const [approvedAlbums, setApprovedAlbums] = useState<ApprovedAlbum[]>([]);
   const [loading, setLoading] = useState(true);
-  const [approvedLoading, setApprovedLoading] = useState(false);
-  const [approvedFetched, setApprovedFetched] = useState(false);
-  const [approvedSearch, setApprovedSearch] = useState<string>('');
-  const [approvedPage, setApprovedPage] = useState<number>(1);
+  const [historyAlbums, setHistoryAlbums] = useState<DecisionHistoryAlbum[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyFetched, setHistoryFetched] = useState(false);
+  const [historyType, setHistoryType] = useState<'albums' | 'files'>('albums');
+  const [historySearch, setHistorySearch] = useState<string>('');
+  const [historyPage, setHistoryPage] = useState<number>(1);
+  const [historyFiles, setHistoryFiles] = useState<DecisionHistoryFile[]>([]);
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [supervisorEmail, setSupervisorEmail] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'albums' | 'quarantine' | 'approved'>('albums');
+  const [activeTab, setActiveTab] = useState<'albums' | 'quarantine' | 'history'>('albums');
   const [quarantineSearch, setQuarantineSearch] = useState<string>('');
   const [quarantinePage, setQuarantinePage] = useState<number>(1);
   const [decidingId, setDecidingId] = useState<string | null>(null);
@@ -139,25 +159,26 @@ export default function SupervisorDashboard() {
     loadData();
   }, [router]);
 
-  // Load approved history (lazy — only when the tab is first opened)
+  // Load decision history (lazy — only when the tab is first opened)
   useEffect(() => {
-    if (activeTab !== 'approved' || approvedFetched) return;
+    if (activeTab !== 'history' || historyFetched) return;
 
-    async function loadApproved() {
-      setApprovedLoading(true);
+    async function loadHistory() {
+      setHistoryLoading(true);
       try {
-        const data = await apiFetch('/api/supervisor/approved-history');
-        setApprovedAlbums(data.approved_albums || []);
-        setApprovedFetched(true);
+        const data = await apiFetch('/api/supervisor/decision-history');
+        setHistoryAlbums(data.history_albums || []);
+        setHistoryFiles(data.history_files || []);
+        setHistoryFetched(true);
       } catch (err) {
-        console.error('Error loading approved history', err);
+        console.error('Error loading decision history', err);
       } finally {
-        setApprovedLoading(false);
+        setHistoryLoading(false);
       }
     }
 
-    loadApproved();
-  }, [activeTab, approvedFetched]);
+    loadHistory();
+  }, [activeTab, historyFetched]);
 
   const openDecisionModal = (type: 'album' | 'file', id: string, action: 'approve' | 'reject') => {
     setDecisionReason("");
@@ -223,7 +244,7 @@ export default function SupervisorDashboard() {
       <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)]">
         <div className="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#E60023]" style={{fontVariationSettings: "'FILL' 1"}}>admin_panel_settings</span>
+            <span className="material-symbols-outlined text-[#E60023]" style={{ fontVariationSettings: "'FILL' 1" }}>admin_panel_settings</span>
             <span className="text-[#E60023] font-bold text-xl tracking-tighter">Panel de Supervisor</span>
           </div>
           <div className="hidden md:flex items-center gap-3">
@@ -259,17 +280,17 @@ export default function SupervisorDashboard() {
         {/* Stats Row */}
         <section className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.06)] flex flex-col gap-1">
-            <span className="material-symbols-outlined text-amber-500 text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>pending_actions</span>
+            <span className="material-symbols-outlined text-amber-500 text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>pending_actions</span>
             <p className="font-headline-lg text-headline-lg text-on-surface mt-1">{loading ? "—" : pendingAlbums.length}</p>
             <p className="font-body-sm text-body-sm text-on-surface-variant">Álbumes pendientes</p>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.06)] flex flex-col gap-1">
-            <span className="material-symbols-outlined text-[#E60023] text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>security</span>
+            <span className="material-symbols-outlined text-[#E60023] text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>security</span>
             <p className="font-headline-lg text-headline-lg text-on-surface mt-1">{loading ? "—" : files.length}</p>
             <p className="font-body-sm text-body-sm text-on-surface-variant">Archivos en cuarentena</p>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.06)] flex flex-col gap-1 col-span-2 md:col-span-1">
-            <span className="material-symbols-outlined text-green-600 text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>verified_user</span>
+            <span className="material-symbols-outlined text-green-600 text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
             <p className="font-headline-lg text-headline-lg text-on-surface mt-1">Activo</p>
             <p className="font-body-sm text-body-sm text-on-surface-variant">Estado del sistema</p>
           </div>
@@ -294,11 +315,11 @@ export default function SupervisorDashboard() {
             {files.length > 0 && <span className="bg-[#E60023] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">{files.length}</span>}
           </button>
           <button
-            onClick={() => setActiveTab('approved')}
-            className={`px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'approved' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
+            onClick={() => setActiveTab('history')}
+            className={`px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'history' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
           >
-            <span className="material-symbols-outlined text-[18px]">verified</span>
-            Aprobados
+            <span className="material-symbols-outlined text-[18px]">history</span>
+            Historial
           </button>
         </div>
 
@@ -353,15 +374,16 @@ export default function SupervisorDashboard() {
               ))}
             </div>
           )
-        ) : activeTab === 'approved' ? (
-          /* ── HISTORIAL DE APROBADOS ── */
-          approvedLoading ? (
+        ) : activeTab === 'history' ? (
+          /* ── HISTORIAL DE DECISIONES ── */
+          historyLoading ? (
             <div className="flex justify-center p-20">
               <span className="material-symbols-outlined animate-spin text-primary text-4xl">refresh</span>
             </div>
           ) : (() => {
-            const filteredApproved = approvedAlbums.filter((a) => {
-              const term = approvedSearch.trim().toLowerCase();
+            // ALBUMS
+            const filteredHistoryAlbums = historyAlbums.filter((a) => {
+              const term = historySearch.trim().toLowerCase();
               if (!term) return true;
               return (
                 a.title.toLowerCase().includes(term) ||
@@ -369,131 +391,265 @@ export default function SupervisorDashboard() {
                 (a.supervisor_email ?? '').toLowerCase().includes(term)
               );
             });
-            const approvedPageSize = 8;
-            const approvedTotalPages = Math.max(1, Math.ceil(filteredApproved.length / approvedPageSize));
-            const approvedSlice = filteredApproved.slice(
-              (approvedPage - 1) * approvedPageSize,
-              approvedPage * approvedPageSize,
+            const historyAlbumsPageSize = 8;
+            const historyAlbumsTotalPages = Math.max(1, Math.ceil(filteredHistoryAlbums.length / historyAlbumsPageSize));
+            const historyAlbumsSlice = filteredHistoryAlbums.slice(
+              (historyPage - 1) * historyAlbumsPageSize,
+              historyPage * historyAlbumsPageSize,
             );
+
+            // FILES
+            const filteredHistoryFiles = historyFiles.filter((f) => {
+              const term = historySearch.trim().toLowerCase();
+              if (!term) return true;
+              return (
+                (f.album_title || '').toLowerCase().includes(term) ||
+                (f.owner_email ?? '').toLowerCase().includes(term) ||
+                (f.supervisor_email ?? '').toLowerCase().includes(term)
+              );
+            });
+            const historyFilesPageSize = 8;
+            const historyFilesTotalPages = Math.max(1, Math.ceil(filteredHistoryFiles.length / historyFilesPageSize));
+            const historyFilesSlice = filteredHistoryFiles.slice(
+              (historyPage - 1) * historyFilesPageSize,
+              historyPage * historyFilesPageSize,
+            );
+
+            const isAlbums = historyType === 'albums';
+            const totalResults = isAlbums ? filteredHistoryAlbums.length : filteredHistoryFiles.length;
+            const totalPages = isAlbums ? historyAlbumsTotalPages : historyFilesTotalPages;
 
             return (
               <div className="space-y-5">
+                {/* Sub-tab Switcher for Albums/Files */}
+                <div className="flex gap-2 bg-surface-container p-1 rounded-full w-fit">
+                  <button
+                    onClick={() => { setHistoryType('albums'); setHistoryPage(1); }}
+                    className={`px-4 py-1.5 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-1 ${historyType === 'albums' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">photo_library</span>
+                    Álbumes
+                  </button>
+                  <button
+                    onClick={() => { setHistoryType('files'); setHistoryPage(1); }}
+                    className={`px-4 py-1.5 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-1 ${historyType === 'files' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">insert_drive_file</span>
+                    Archivos
+                  </button>
+                </div>
+
                 {/* Search + counter */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="relative w-full sm:grow sm:basis-0 sm:min-w-[320px]">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
                     <input
-                      value={approvedSearch}
+                      value={historySearch}
                       onChange={(e) => {
-                        setApprovedSearch(e.target.value);
-                        setApprovedPage(1);
+                        setHistorySearch(e.target.value);
+                        setHistoryPage(1);
                       }}
                       className="w-full pl-10 pr-4 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant focus:ring-2 focus:ring-primary-container outline-none text-sm"
-                      placeholder="Filtrar por título, propietario o supervisor"
+                      placeholder={`Filtrar por título, propietario o supervisor...`}
                       type="text"
                     />
                   </div>
                   <div className="flex items-center gap-2 text-sm text-secondary sm:shrink-0">
-                    <span>{filteredApproved.length} resultados</span>
+                    <span>{totalResults} resultados</span>
                     <span>•</span>
-                    <span>Página {approvedPage} de {approvedTotalPages}</span>
+                    <span>Página {historyPage} de {totalPages}</span>
                   </div>
                 </div>
 
                 {/* Cards */}
-                {approvedSlice.length === 0 ? (
-                  <div className="py-20 text-center border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
-                    <span className="material-symbols-outlined text-5xl mb-3 block">verified</span>
-                    <p className="font-body-lg">No hay álbumes aprobados aún.</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {approvedSlice.map((album) => (
-                      <div key={album.id} className="bg-surface-container-lowest rounded-2xl p-5 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.06)] border border-green-100 flex flex-col sm:flex-row sm:items-start gap-4">
-                        {/* Icon */}
-                        <div className="shrink-0 w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-green-600 text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                        </div>
+                {isAlbums ? (
+                  /* ALBUMS VIEW */
+                  historyAlbumsSlice.length === 0 ? (
+                    <div className="py-20 text-center border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
+                      <span className="material-symbols-outlined text-5xl mb-3 block">history</span>
+                      <p className="font-body-lg">No hay historial de decisiones de álbumes aún.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {historyAlbumsSlice.map((album) => {
+                        const isApproved = album.status === 'approved' || album.decision_action === 'approve';
+                        const cardBorder = isApproved ? 'border-green-100' : 'border-red-100';
+                        const iconBg = isApproved ? 'bg-green-50' : 'bg-red-50';
+                        const iconColor = isApproved ? 'text-green-600' : 'text-red-600';
+                        const iconName = isApproved ? 'verified' : 'cancel';
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 className="font-headline-sm text-headline-sm text-on-surface truncate">{album.title}</h3>
-                            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                              album.privacy === 'public' ? 'bg-blue-50 text-blue-700' : 'bg-zinc-100 text-zinc-600'
-                            }`}>
-                              {album.privacy === 'public' ? 'Público' : 'Privado'}
-                            </span>
-                          </div>
-
-                          {album.description && (
-                            <p className="text-sm text-on-surface-variant mb-3 line-clamp-2">{album.description}</p>
-                          )}
-
-                          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-secondary">
-                            <div className="flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[15px]">person</span>
-                              <span>Propietario: <span className="font-medium text-on-surface font-mono">{album.owner_email ?? '—'}</span></span>
+                        return (
+                          <div key={album.id} className={`bg-surface-container-lowest rounded-2xl p-5 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.06)] border ${cardBorder} flex flex-col sm:flex-row sm:items-start gap-4`}>
+                            {/* Icon */}
+                            <div className={`shrink-0 w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
+                              <span className={`material-symbols-outlined ${iconColor} text-2xl`} style={{ fontVariationSettings: "'FILL' 1" }}>{iconName}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[15px]">admin_panel_settings</span>
-                              <span>Aprobado por: <span className="font-medium text-on-surface">{album.supervisor_email ?? 'Supervisor desconocido'}</span></span>
-                            </div>
-                            {album.approved_at && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-[15px]">event</span>
-                                <span>Aprobado el: <span className="font-medium text-on-surface">{formatDate(album.approved_at)}</span></span>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <h3 className="font-headline-sm text-headline-sm text-on-surface truncate">{album.title}</h3>
+                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${album.privacy === 'public' ? 'bg-blue-50 text-blue-700' : 'bg-zinc-100 text-zinc-600'
+                                  }`}>
+                                  {album.privacy === 'public' ? 'Público' : 'Privado'}
+                                </span>
+                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full uppercase ${isApproved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  }`}>
+                                  {isApproved ? 'Aprobado' : 'Rechazado'}
+                                </span>
                               </div>
-                            )}
-                            <div className="flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[15px]">image</span>
-                              <span><span className="font-medium text-on-surface">{album.clean_files_count}</span> {album.clean_files_count === 1 ? 'archivo limpio' : 'archivos limpios'}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[15px]">calendar_today</span>
-                              <span>Creado: {formatDate(album.created_at)}</span>
+
+                              {album.description && (
+                                <p className="text-sm text-on-surface-variant mb-3 line-clamp-2">{album.description}</p>
+                              )}
+
+                              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-secondary">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">person</span>
+                                  <span>Propietario: <span className="font-medium text-on-surface font-mono">{album.owner_email ?? '—'}</span></span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">admin_panel_settings</span>
+                                  <span>Decisión por: <span className="font-medium text-on-surface">{album.supervisor_email ?? 'Supervisor desconocido'}</span></span>
+                                </div>
+                                {album.decision_at && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[15px]">event</span>
+                                    <span>Decidido el: <span className="font-medium text-on-surface">{formatDate(album.decision_at)}</span></span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">image</span>
+                                  <span><span className="font-medium text-on-surface">{album.files_count}</span> {album.files_count === 1 ? 'archivo' : 'archivos'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">calendar_today</span>
+                                  <span>Creado: {formatDate(album.created_at)}</span>
+                                </div>
+                              </div>
+
+                              {album.audit_reason && (
+                                <div className={`mt-3 ${isApproved ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'} text-xs px-3 py-2 rounded-lg border`}>
+                                  <span className="font-semibold">Nota del supervisor: </span>{album.audit_reason}
+                                </div>
+                              )}
                             </div>
                           </div>
+                        )
+                      })}
+                    </div>
+                  )
+                ) : (
+                  /* FILES VIEW */
+                  historyFilesSlice.length === 0 ? (
+                    <div className="py-20 text-center border-2 border-dashed border-outline-variant rounded-3xl text-secondary">
+                      <span className="material-symbols-outlined text-5xl mb-3 block">history</span>
+                      <p className="font-body-lg">No hay historial de decisiones de archivos aún.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {historyFilesSlice.map((file) => {
+                        const isApproved = file.status === 'clean' || file.decision_action === 'approve';
+                        const cardBorder = isApproved ? 'border-green-100' : 'border-red-100';
+                        const iconBg = isApproved ? 'bg-green-50' : 'bg-red-50';
+                        const iconColor = isApproved ? 'text-green-600' : 'text-red-600';
+                        const iconName = isApproved ? 'verified' : 'cancel';
 
-                          {album.audit_reason && (
-                            <div className="mt-3 bg-green-50 text-green-800 text-xs px-3 py-2 rounded-lg border border-green-200">
-                              <span className="font-semibold">Nota del supervisor: </span>{album.audit_reason}
+                        return (
+                          <div key={file.id} className={`bg-surface-container-lowest rounded-2xl p-5 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.06)] border ${cardBorder} flex flex-col sm:flex-row sm:items-start gap-4`}>
+                            {/* Icon / Thumbnail */}
+                            <div className={`shrink-0 w-16 h-16 rounded-xl ${iconBg} border ${cardBorder} flex items-center justify-center overflow-hidden relative bg-surface-container-high`}>
+                              {file.file_type === "pdf" ? (
+                                <span className="material-symbols-outlined text-3xl text-secondary">picture_as_pdf</span>
+                              ) : (
+                                file.preview_url ? (
+                                  <img className="w-full h-full object-cover" src={file.preview_url} alt="Archivo historial" />
+                                ) : (
+                                  <span className={`material-symbols-outlined ${iconColor} text-2xl`} style={{ fontVariationSettings: "'FILL' 1" }}>image</span>
+                                )
+                              )}
+                              {/* Overlay tiny status icon */}
+                              <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${isApproved ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center border-2 border-white`}>
+                                <span className={`material-symbols-outlined ${iconColor} text-[14px]`} style={{ fontVariationSettings: "'FILL' 1" }}>{iconName}</span>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <h3 className="font-headline-sm text-headline-sm text-on-surface truncate">
+                                  {file.file_type === 'pdf' ? 'Documento PDF' : 'Imagen'}
+                                </h3>
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 truncate max-w-[200px]">
+                                  Álbum: {file.album_title || file.album_id.substring(0, 8)}
+                                </span>
+                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full uppercase ${isApproved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  }`}>
+                                  {isApproved ? 'Aprobado' : 'Rechazado'}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-secondary mt-2">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">person</span>
+                                  <span>Propietario: <span className="font-medium text-on-surface font-mono">{file.owner_email ?? '—'}</span></span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">admin_panel_settings</span>
+                                  <span>Decisión por: <span className="font-medium text-on-surface">{file.supervisor_email ?? 'Supervisor desconocido'}</span></span>
+                                </div>
+                                {file.decision_at && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[15px]">event</span>
+                                    <span>Decidido el: <span className="font-medium text-on-surface">{formatDate(file.decision_at)}</span></span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[15px]">calendar_today</span>
+                                  <span>Subido: {formatDate(file.created_at)}</span>
+                                </div>
+                              </div>
+
+                              {file.audit_reason && (
+                                <div className={`mt-3 ${isApproved ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'} text-xs px-3 py-2 rounded-lg border`}>
+                                  <span className="font-semibold">Nota del supervisor: </span>{file.audit_reason}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
                 )}
 
                 {/* Pagination controls */}
-                {approvedTotalPages > 1 && (
+                {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-3 pt-2">
                     <button
-                      onClick={() => setApprovedPage((p) => Math.max(1, p - 1))}
-                      disabled={approvedPage === 1}
+                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                      disabled={historyPage === 1}
                       className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-40 cursor-pointer"
                     >
                       Anterior
                     </button>
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: approvedTotalPages }, (_, i) => i + 1).map((p) => (
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                         <button
                           key={p}
-                          onClick={() => setApprovedPage(p)}
-                          className={`w-9 h-9 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
-                            p === approvedPage
+                          onClick={() => setHistoryPage(p)}
+                          className={`w-9 h-9 rounded-full text-sm font-semibold transition-colors cursor-pointer ${p === historyPage
                               ? 'bg-[#E60023] text-white'
                               : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-                          }`}
+                            }`}
                         >
                           {p}
                         </button>
                       ))}
                     </div>
                     <button
-                      onClick={() => setApprovedPage((p) => Math.min(approvedTotalPages, p + 1))}
-                      disabled={approvedPage === approvedTotalPages}
+                      onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={historyPage === totalPages}
                       className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-40 cursor-pointer"
                     >
                       Siguiente
@@ -659,14 +815,14 @@ export default function SupervisorDashboard() {
             onClick={() => setActiveTab('albums')}
             className={`flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'albums' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
-            <span className="material-symbols-outlined text-[22px]" style={{fontVariationSettings: activeTab === 'albums' ? "'FILL' 1" : "'FILL' 0"}}>photo_library</span>
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'albums' ? "'FILL' 1" : "'FILL' 0" }}>photo_library</span>
             <span className="text-[10px] font-medium">Álbumes</span>
           </button>
           <button
             onClick={() => setActiveTab('quarantine')}
             className={`relative flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'quarantine' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
-            <span className="material-symbols-outlined text-[22px]" style={{fontVariationSettings: activeTab === 'quarantine' ? "'FILL' 1" : "'FILL' 0"}}>security</span>
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'quarantine' ? "'FILL' 1" : "'FILL' 0" }}>security</span>
             <span className="text-[10px] font-medium">Cuarentena</span>
             {files.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#E60023] rounded-full"></span>}
           </button>
@@ -674,7 +830,7 @@ export default function SupervisorDashboard() {
             onClick={() => setActiveTab('approved')}
             className={`flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'approved' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
-            <span className="material-symbols-outlined text-[22px]" style={{fontVariationSettings: activeTab === 'approved' ? "'FILL' 1" : "'FILL' 0"}}>verified</span>
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'approved' ? "'FILL' 1" : "'FILL' 0" }}>verified</span>
             <span className="text-[10px] font-medium">Aprobados</span>
           </button>
           <Link href="/admin/users" className="flex flex-col items-center gap-0.5 p-3 rounded-full text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">

@@ -83,11 +83,10 @@ export default function Dashboard() {
               );
               if (!res.ok) return { ...album, preview_url: null };
               const json = await res.json();
-              const images = (json.files || []).filter(
-                (f: any) => f.type === 'image',
+              const cleanImages = (json.files || []).filter(
+                (f: any) => f.type === 'image' && f.status === 'clean'
               );
-              const clean = images.find((f: any) => f.status === 'clean');
-              return { ...album, preview_url: (clean || images[0])?.url ?? null };
+              return { ...album, preview_url: cleanImages[0]?.url ?? null };
             } catch {
               return { ...album, preview_url: null };
             }
