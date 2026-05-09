@@ -22,7 +22,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     }
   }
 
-  console.log(`[apiFetch] Intentando conectar a: ${url}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[apiFetch] Intentando conectar a: ${url}`);
+  }
 
   const response = await fetch(url, {
     ...options,

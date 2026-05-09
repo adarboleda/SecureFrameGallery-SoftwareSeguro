@@ -14,9 +14,10 @@ router = APIRouter()
 async def register_user(request: Request, user: UserRegister):
     """
     Registro real de usuarios usando Supabase Auth.
+    Requiere supabase_admin (service role key) para usar auth.admin.create_user.
     """
     try:
-        response = supabase.auth.admin.create_user({
+        response = supabase_admin.auth.admin.create_user({
             "email": user.email,
             "password": user.password,
             "email_confirm": True,
@@ -24,8 +25,12 @@ async def register_user(request: Request, user: UserRegister):
                 "username": user.username or ""
             }
         })
-    except Exception:
-        raise HTTPException(status_code=400, detail="No se pudo registrar la cuenta.")
+    except Exception as e:
+        err_msg = str(e)
+        # Surface Supabase-specific messages (e.g. "User already registered")
+        if "already" in err_msg.lower() or "registered" in err_msg.lower() or "exists" in err_msg.lower():
+            raise HTTPException(status_code=400, detail="Ya existe una cuenta con ese correo electrónico.")
+        raise HTTPException(status_code=400, detail=f"No se pudo registrar la cuenta: {err_msg}")
 
     created_user = None
     if hasattr(response, "user"):
