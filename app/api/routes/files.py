@@ -48,6 +48,23 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
     if album_check.data[0]["status"] != "approved":
         raise HTTPException(status_code=403, detail="Album must be approved by a supervisor before uploading files.")
 
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido.")
+
+    existing_paths = [
+        f"uploads/{album_id}/{file.filename}",
+        f"quarantine/{album_id}/{file.filename}",
+    ]
+    existing = (
+        supabase_admin.table("files")
+        .select("id")
+        .eq("album_id", album_id)
+        .in_("storage_path", existing_paths)
+        .execute()
+    )
+    if existing.data:
+        raise HTTPException(status_code=409, detail="Ya existe un archivo con ese nombre en el álbum.")
+
     contents = await file.read()
     
     # CONTROL DE SEGURIDAD 1: Tamaño del archivo
@@ -84,11 +101,13 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
             output_buffer = io.BytesIO()
             clean_img.save(output_buffer, format="PNG")
             clean_bytes = output_buffer.getvalue()
+            content_type = "image/png"
         else:
             file_type = "pdf"
             # CONTROL DE SEGURIDAD PDF: Buscar scripts maliciosos o adjuntos ocultos
             analysis_result = analyze_pdf_security(contents)
             clean_bytes = contents # Para PDFs no modificamos el archivo original si está limpio (solo lo pasamos a cuarentena si es sospechoso)
+            content_type = "application/pdf"
             
         status = "quarantined" if analysis_result.get("is_suspicious", False) else "clean"
         folder = "quarantine" if status == "quarantined" else "uploads"
@@ -96,7 +115,13 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
         file_path = f"{folder}/{album_id}/{file.filename}"
         
         # Subir a bucket
-        supabase_admin.storage.from_("secure-gallery-images").upload(file_path, clean_bytes)
+        upload_result = supabase_admin.storage.from_("secure-gallery-images").upload(
+            file_path,
+            clean_bytes,
+            file_options={"content-type": content_type, "upsert": "true"}
+        )
+        if hasattr(upload_result, "error") and upload_result.error:
+            raise RuntimeError(f"Storage upload failed: {upload_result.error}")
         
         # Guardar en base de datos (tabla 'files')
         supabase_admin.table("files").insert({

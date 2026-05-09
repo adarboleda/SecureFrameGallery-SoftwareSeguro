@@ -20,6 +20,7 @@ interface FileData {
   id: string;
   url: string;
   type: string;
+  name?: string;
 }
 
 export default function PublicGallery() {
@@ -243,6 +244,9 @@ export default function PublicGallery() {
                       </span>
                     </div>
                   </div>
+                  <p className="mt-2 text-xs text-secondary truncate" title={file.name || ''}>
+                    {file.name || 'Archivo'}
+                  </p>
                 </div>
               ))}
             </div>

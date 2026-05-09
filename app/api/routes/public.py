@@ -141,11 +141,13 @@ async def get_my_album_files(request: Request, album_id: str, user_id: str | Non
         except Exception:
             url = public_url
             
+        file_name = file["storage_path"].split("/")[-1] if file.get("storage_path") else ""
         result_files.append({
             "id": file["id"],
             "url": url,
             "type": file["file_type"],
-            "status": file["status"]
+            "status": file["status"],
+            "name": file_name
         })
 
     return {"files": result_files}

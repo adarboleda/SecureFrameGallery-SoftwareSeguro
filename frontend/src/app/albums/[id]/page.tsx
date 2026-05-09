@@ -11,6 +11,7 @@ interface FileData {
   url: string;
   type: string;
   status: string;
+  name?: string;
 }
 
 export default function AlbumWorkspace({
@@ -330,12 +331,17 @@ export default function AlbumWorkspace({
                         </button>
                       </div>
                     </div>
-                    <div className="mt-2 px-1 flex items-center gap-1.5">
-                      <span
-                        className={`w-2 h-2 rounded-full shrink-0 ${st.color}`}
-                      ></span>
-                      <p className={`text-xs font-medium ${st.text}`}>
-                        {st.label}
+                    <div className="mt-2 px-1 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${st.color}`}
+                        ></span>
+                        <p className={`text-xs font-medium ${st.text}`}>
+                          {st.label}
+                        </p>
+                      </div>
+                      <p className="text-xs text-secondary truncate" title={file.name || ''}>
+                        {file.name || 'Archivo sin nombre'}
                       </p>
                     </div>
                   </div>
