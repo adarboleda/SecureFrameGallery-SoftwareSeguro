@@ -33,7 +33,8 @@ async def list_users(supervisor_id: str):
             "id": u.id,
             "email": u.email,
             "username": u.user_metadata.get("username", "") if u.user_metadata else "",
-            "role": role
+            "role": role,
+            "is_suspended": bool(getattr(u, "banned_until", False))
         })
     return {"users": result}
 
@@ -47,3 +48,21 @@ async def update_user_role(user_id: str, supervisor_id: str, new_role: str):
     
     supabase.table("profiles").update({"role": new_role}).eq("id", user_id).execute()
     return {"message": f"Rol actualizado a '{new_role}'."}
+
+@router.post("/users/{user_id}/suspend")
+async def suspend_user(user_id: str, supervisor_id: str, suspend: bool):
+    """Suspende o reactiva a un usuario."""
+    _require_supervisor(supervisor_id)
+    
+    # Verificar que el usuario no sea supervisor
+    profile = supabase_admin.table("profiles").select("role").eq("id", user_id).execute()
+    if profile.data and profile.data[0]["role"] == "supervisor":
+        raise HTTPException(status_code=403, detail="No se puede suspender a un administrador/supervisor.")
+        
+    ban_duration = "876000h" if suspend else "none"
+    try:
+        supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": ban_duration})
+        status_msg = "suspendido" if suspend else "reactivado"
+        return {"message": f"Usuario {status_msg} exitosamente."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al cambiar estado del usuario: {str(e)}")

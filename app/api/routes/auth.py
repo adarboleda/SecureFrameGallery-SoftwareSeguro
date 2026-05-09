@@ -70,7 +70,24 @@ async def login_user(request: Request, payload: dict):
             "email": email,
             "password": password
         })
-    except Exception:
+    except Exception as e:
+        err_str = str(e).lower()
+        if "ban" in err_str or "suspend" in err_str:
+            raise HTTPException(status_code=403, detail="Usuario suspendido por el administrador.")
+            
+        # Fallback manual check via admin API if Supabase masks the error
+        try:
+            users_list = supabase_admin.auth.admin.list_users()
+            users = getattr(users_list, "users", []) or (users_list.get("users", []) if isinstance(users_list, dict) else users_list)
+            for u in users:
+                if u.email.lower() == email:
+                    if getattr(u, "banned_until", False):
+                        raise HTTPException(status_code=403, detail="Usuario suspendido por el administrador.")
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
         _record_failed_login(email, client_ip)
         raise HTTPException(status_code=401, detail="Credenciales inválidas.")
 

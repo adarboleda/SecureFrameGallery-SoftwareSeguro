@@ -11,6 +11,7 @@ interface ManagedUser {
   email: string;
   username: string;
   role: "user" | "supervisor";
+  is_suspended?: boolean;
   updating?: boolean;
 }
 
@@ -56,6 +57,24 @@ export default function UserManagement() {
       setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, role: newRole as "user" | "supervisor", updating: false } : u));
     } catch (err) {
       console.error("Error actualizando rol", err);
+      setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: false } : u));
+    }
+  };
+
+  const toggleSuspend = async (targetUser: ManagedUser) => {
+    if (!supervisorId) return;
+    const isCurrentlySuspended = targetUser.is_suspended;
+
+    setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: true } : u));
+
+    try {
+      await fetch(
+        `http://localhost:8000/api/admin/users/${targetUser.id}/suspend?supervisor_id=${supervisorId}&suspend=${!isCurrentlySuspended}`,
+        { method: "POST" }
+      );
+      setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, is_suspended: !isCurrentlySuspended, updating: false } : u));
+    } catch (err) {
+      console.error("Error al suspender/reactivar usuario", err);
       setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: false } : u));
     }
   };
@@ -163,6 +182,12 @@ export default function UserManagement() {
                     }`}>
                       {user.role === "supervisor" ? "Supervisor" : "Usuario"}
                     </span>
+                    {user.is_suspended && (
+                      <span className="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-red-100 text-red-800 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                        Suspendido
+                      </span>
+                    )}
                   </div>
                   {user.username && (
                     <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">@{user.username}</p>
@@ -171,21 +196,40 @@ export default function UserManagement() {
                 </div>
                 {/* Action */}
                 {user.id !== supervisorId && (
-                  <button
-                    onClick={() => toggleRole(user)}
-                    disabled={user.updating}
-                    className={`shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full font-label-md text-label-md transition-colors cursor-pointer disabled:opacity-50 ${
-                      user.role === "supervisor"
-                        ? "bg-surface-container text-on-surface hover:bg-red-50 hover:text-red-600"
-                        : "bg-[#E60023] text-white hover:bg-[#cc0020]"
-                    }`}
-                  >
-                    {user.updating
-                      ? <span className="material-symbols-outlined animate-spin text-[18px]">refresh</span>
-                      : <span className="material-symbols-outlined text-[18px]">{user.role === "supervisor" ? "person_remove" : "admin_panel_settings"}</span>
-                    }
-                    {user.role === "supervisor" ? "Quitar supervisor" : "Hacer supervisor"}
-                  </button>
+                  <div className="shrink-0 flex items-center gap-2">
+                    {user.role === "user" && (
+                      <button
+                        onClick={() => toggleSuspend(user)}
+                        disabled={user.updating}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-label-md text-label-md transition-colors cursor-pointer disabled:opacity-50 ${
+                          user.is_suspended
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-surface-container text-on-surface hover:bg-red-50 hover:text-red-600"
+                        }`}
+                      >
+                        {user.updating
+                          ? <span className="material-symbols-outlined animate-spin text-[18px]">refresh</span>
+                          : <span className="material-symbols-outlined text-[18px]">{user.is_suspended ? "lock_open" : "lock"}</span>
+                        }
+                        {user.is_suspended ? "Reactivar" : "Suspender"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => toggleRole(user)}
+                      disabled={user.updating || user.is_suspended}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-label-md text-label-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                        user.role === "supervisor"
+                          ? "bg-surface-container text-on-surface hover:bg-red-50 hover:text-red-600"
+                          : "bg-[#E60023] text-white hover:bg-[#cc0020]"
+                      }`}
+                    >
+                      {user.updating
+                        ? <span className="material-symbols-outlined animate-spin text-[18px]">refresh</span>
+                        : <span className="material-symbols-outlined text-[18px]">{user.role === "supervisor" ? "person_remove" : "admin_panel_settings"}</span>
+                      }
+                      {user.role === "supervisor" ? "Quitar supervisor" : "Hacer supervisor"}
+                    </button>
+                  </div>
                 )}
                 {user.id === supervisorId && (
                   <span className="shrink-0 px-5 py-2.5 rounded-full font-label-md text-label-md bg-secondary-fixed text-secondary">

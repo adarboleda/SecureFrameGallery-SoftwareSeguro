@@ -50,7 +50,9 @@ export default function Login() {
       }
     } catch (err: any) {
       const message = String(err?.message || '').toLowerCase();
-      if (message.includes('bloqueada')) {
+      if (message.includes('suspendido')) {
+        setError('Tu cuenta ha sido suspendida por un administrador. No puedes iniciar sesión.');
+      } else if (message.includes('bloqueada')) {
         setError('Cuenta bloqueada temporalmente. Intenta de nuevo en 15 minutos.');
       } else {
         setError('Credenciales inválidas.');
