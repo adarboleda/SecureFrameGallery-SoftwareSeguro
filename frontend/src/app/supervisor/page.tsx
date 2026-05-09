@@ -19,6 +19,7 @@ interface QuarantinedFile {
   user_id?: string;
   user_email?: string;
   status: string;
+  analysis_metadata?: any;
 }
 
 interface PendingAlbum {
@@ -827,11 +828,11 @@ export default function SupervisorDashboard() {
             {files.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#E60023] rounded-full"></span>}
           </button>
           <button
-            onClick={() => setActiveTab('approved')}
-            className={`flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'approved' ? 'text-[#E60023]' : 'text-zinc-400'}`}
+            onClick={() => setActiveTab('history')}
+            className={`flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'history' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
-            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'approved' ? "'FILL' 1" : "'FILL' 0" }}>verified</span>
-            <span className="text-[10px] font-medium">Aprobados</span>
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'history' ? "'FILL' 1" : "'FILL' 0" }}>history</span>
+            <span className="text-[10px] font-medium">Historial</span>
           </button>
           <Link href="/admin/users" className="flex flex-col items-center gap-0.5 p-3 rounded-full text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
             <span className="material-symbols-outlined text-[22px]">manage_accounts</span>
