@@ -55,9 +55,12 @@ async def upload_secure_file(request: Request, file: UploadFile = File(...), use
         raise HTTPException(status_code=400, detail="File exceeds 10MB limit.")
         
     # CONTROL DE SEGURIDAD 2: File Magic Numbers
-    mime_type = get_mime_type(contents)
+    try:
+        mime_type = get_mime_type(contents)
+    except RuntimeError:
+        raise HTTPException(status_code=400, detail="Formato no permitido. Solo JPEG, PNG o PDF.")
     if mime_type not in ["image/jpeg", "image/png", "application/pdf"]:
-        raise HTTPException(status_code=400, detail="Invalid file signature. Only JPEG, PNG or PDF allowed.")
+        raise HTTPException(status_code=400, detail="Formato no permitido. Solo JPEG, PNG o PDF.")
         
     try:
         if mime_type in ["image/jpeg", "image/png"]:

@@ -71,6 +71,19 @@ export default function AlbumWorkspace({
     const file = e.target.files?.[0];
     if (!file || !userId) return;
 
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+    const allowedExts = [".jpg", ".jpeg", ".png", ".pdf"];
+    const fileName = file.name.toLowerCase();
+    const hasAllowedExt = allowedExts.some((ext) => fileName.endsWith(ext));
+    if (!allowedTypes.includes(file.type) && !hasAllowedExt) {
+      setUploadMessage({
+        text: "❌ Formato no permitido. Solo se aceptan JPEG, PNG o PDF.",
+        ok: false,
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     setUploadMessage(null);
     try {
