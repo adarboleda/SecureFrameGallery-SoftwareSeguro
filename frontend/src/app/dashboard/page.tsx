@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [albumsLoading, setAlbumsLoading] = useState(true);
   const [updatingPrivacyId, setUpdatingPrivacyId] = useState<string | null>(null);
+  const [albumToDelete, setAlbumToDelete] = useState<string | null>(null);
 
   // ── Init ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,16 @@ export default function Dashboard() {
       console.error('Error al actualizar privacidad', err);
     } finally {
       setUpdatingPrivacyId(null);
+    }
+  };
+
+  const handleDeleteAlbum = async (albumId: string) => {
+    try {
+      await albumService.deleteAlbum(albumId);
+      setAlbums((prev) => prev.filter((a) => a.id !== albumId));
+    } catch (err) {
+      console.error('Error al eliminar álbum', err);
+      alert('No se pudo eliminar el álbum.');
     }
   };
 
@@ -291,24 +302,37 @@ export default function Dashboard() {
                   key={album.id}
                   className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_20px_-5px_rgba(0,0,0,0.07)] group relative border border-transparent hover:border-primary-container/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.1)]"
                 >
-                  {/* Status badge — top-right, smaller on mobile */}
-                  <div className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm px-2 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <span
-                      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                        album.status === 'approved'
-                          ? 'bg-green-500'
+                  {/* Status badge and Delete button — top-right */}
+                  <div className="absolute top-3 right-3 z-20 flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setAlbumToDelete(album.id);
+                      }}
+                      className="bg-white/90 hover:bg-red-50 hover:text-red-600 text-zinc-500 backdrop-blur-sm w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-sm transition-colors cursor-pointer flex items-center justify-center"
+                      title="Eliminar álbum"
+                    >
+                      <span className="material-symbols-outlined text-[16px] sm:text-[18px]">delete</span>
+                    </button>
+                    <div className="bg-white/90 backdrop-blur-sm px-2 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1 shadow-sm h-fit">
+                      <span
+                        className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                          album.status === 'approved'
+                            ? 'bg-green-500'
+                            : album.status === 'pending'
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                        }`}
+                      />
+                      <span className="font-label-sm text-label-sm text-zinc-800 text-[10px] sm:text-xs leading-none mt-0.5">
+                        {album.status === 'approved'
+                          ? 'Aprobado'
                           : album.status === 'pending'
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
-                      }`}
-                    />
-                    <span className="font-label-sm text-label-sm text-zinc-800 text-[10px] sm:text-xs">
-                      {album.status === 'approved'
-                        ? 'Aprobado'
-                        : album.status === 'pending'
-                          ? 'Pendiente'
-                          : 'Rechazado'}
-                    </span>
+                            ? 'Pendiente'
+                            : 'Rechazado'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Image preview */}
@@ -391,32 +415,42 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* BottomNavBar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 bg-white/95 backdrop-blur-lg shadow-none border-t border-outline-variant/30">
-        <div className="flex justify-around items-center max-w-md mx-auto h-16">
-          <Link href="/">
-            <button className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center cursor-pointer">
-              <span className="material-symbols-outlined text-[28px]">home</span>
-              <span className="text-[10px]">Inicio</span>
-            </button>
-          </Link>
-          <Link href="/albums/new">
-            <button className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center cursor-pointer">
-              <span className="material-symbols-outlined text-[28px]">add</span>
-              <span className="text-[10px]">Nuevo</span>
-            </button>
-          </Link>
-          <button className="text-zinc-900 scale-110 hover:bg-zinc-100 rounded-full p-3 active:scale-75 transition-all duration-300 ease-out flex flex-col items-center justify-center">
-            <span
-              className="material-symbols-outlined text-[28px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              person
-            </span>
-            <span className="text-[10px]">Perfil</span>
-          </button>
+      {/* ──── DELETE MODAL ──── */}
+      {albumToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm" onClick={() => setAlbumToDelete(null)} />
+          <div className="bg-white rounded-[32px] p-8 w-full max-w-[400px] shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-red-50 text-[#E60023] flex items-center justify-center mb-6">
+                <span className="material-symbols-outlined text-[32px]">delete_forever</span>
+              </div>
+              <h3 className="text-2xl font-bold text-zinc-900 mb-2">
+                ¿Eliminar álbum?
+              </h3>
+              <p className="text-zinc-500 leading-relaxed mb-8">
+                Esta acción eliminará el álbum y todos los archivos permanentemente. No se puede deshacer.
+              </p>
+              <div className="flex flex-col sm:flex-row w-full gap-3">
+                <button
+                  onClick={() => setAlbumToDelete(null)}
+                  className="flex-1 px-6 py-3.5 rounded-full font-bold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-all duration-200 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if(albumToDelete) handleDeleteAlbum(albumToDelete);
+                    setAlbumToDelete(null);
+                  }}
+                  className="flex-1 px-6 py-3.5 rounded-full font-bold text-white bg-[#E60023] hover:bg-red-700 shadow-lg shadow-red-200 transition-all duration-200 active:scale-[0.98] cursor-pointer"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </nav>
+      )}
     </div>
   );
 }

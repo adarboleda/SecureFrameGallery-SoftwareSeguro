@@ -357,37 +357,6 @@ export default function AlbumWorkspace({
         </section>
       </main>
 
-      {/* Mobile BottomNav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-5 md:hidden">
-        <div className="flex justify-around items-center max-w-md mx-auto h-16 bg-white/95 backdrop-blur-lg rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] border border-zinc-100">
-          <Link href="/dashboard">
-            <button className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 flex flex-col items-center cursor-pointer">
-              <span className="material-symbols-outlined text-[22px]">
-                home
-              </span>
-              <span className="text-[10px]">Inicio</span>
-            </button>
-          </Link>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading || !userId}
-            className="bg-[#E60023] text-white rounded-full p-3.5 flex items-center justify-center shadow-[0_4px_14px_rgba(230,0,35,0.35)] cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[22px]">
-              upload
-            </span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 flex flex-col items-center cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[22px]">
-              logout
-            </span>
-            <span className="text-[10px]">Salir</span>
-          </button>
-        </div>
-      </nav>
 
       {/* Lightbox */}
       {lightbox && (

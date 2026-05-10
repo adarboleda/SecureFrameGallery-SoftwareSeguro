@@ -26,7 +26,7 @@ class UserRegister(BaseModel):
 class AlbumCreate(BaseModel):
     user_id: str
     title: str
-    description: str
+    description: str | None = None
     privacy: Literal["public", "private"] = "public"  # RF02: Privacidad inicial del álbum
 
     @field_validator("title")
@@ -40,7 +40,9 @@ class AlbumCreate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: str) -> str:
+    def validate_description(cls, v: str | None) -> str | None:
+        if not v or v.strip() == "":
+            return None
         if len(v) < 5:
             raise ValueError("La descripción debe tener al menos 5 caracteres")
         if len(v) > 200:

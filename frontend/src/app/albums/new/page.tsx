@@ -41,7 +41,7 @@ export default function NewAlbum() {
   };
 
   return (
-    <div className="bg-background min-h-screen flex items-center justify-center p-container-margin antialiased">
+    <div className="bg-background min-h-screen flex items-center justify-center p-container-margin pb-24 md:pb-container-margin antialiased">
       {/* Suppressed TopAppBar and BottomNavBar as this is a transactional form screen */}
       <main className="w-full max-w-[480px]">
         <div className="bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_-12px_rgba(0,0,0,0.08)] p-xl w-full flex flex-col gap-lg relative">

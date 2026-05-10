@@ -677,20 +677,6 @@ export default function Quarantine() {
           <QuarantineContent />
         </Suspense>
       </main>
-
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-4">
-        <div className="bg-white/95 backdrop-blur-lg flex justify-center gap-16 items-center w-full max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] border border-zinc-100">
-          <Link href="/supervisor" className="flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-900 transition-all cursor-pointer">
-            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
-            <span className="text-[10px] font-medium leading-none">Volver</span>
-          </Link>
-          <div className="flex flex-col items-center justify-center gap-1 text-[#E60023]">
-            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>admin_panel_settings</span>
-            <span className="text-[10px] font-medium leading-none">Análisis</span>
-          </div>
-        </div>
-      </nav>
     </div>
   );
 }

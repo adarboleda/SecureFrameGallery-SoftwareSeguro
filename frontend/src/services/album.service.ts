@@ -34,6 +34,12 @@ export const albumService = {
     });
   },
 
+  async deleteAlbum(albumId: string) {
+    return await apiFetch(`/api/albums/${albumId}`, {
+      method: "DELETE"
+    });
+  },
+
   // Supervisor
   async getPendingAlbums(supervisorId: string) {
     return await apiFetch(`/api/supervisor/albums?supervisor_id=${supervisorId}`);

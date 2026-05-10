@@ -804,49 +804,6 @@ export default function SupervisorDashboard() {
           </div>
         </div>
       )}
-
-      {/* Bottom Navigation (Mobile) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-4">
-        <div className="bg-white/95 backdrop-blur-lg flex justify-between items-center w-full max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] border border-zinc-100 px-2">
-          <Link href="/" className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
-            <span className="material-symbols-outlined text-[22px]">home</span>
-            <span className="text-[10px] font-medium leading-none">Inicio</span>
-          </Link>
-          <button
-            onClick={() => setActiveTab('albums')}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === 'albums' ? 'text-[#E60023]' : 'text-zinc-400'}`}
-          >
-            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'albums' ? "'FILL' 1" : "'FILL' 0" }}>photo_library</span>
-            <span className="text-[10px] font-medium leading-none">Álbumes</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('quarantine')}
-            className={`flex-1 relative flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === 'quarantine' ? 'text-[#E60023]' : 'text-zinc-400'}`}
-          >
-            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'quarantine' ? "'FILL' 1" : "'FILL' 0" }}>security</span>
-            <span className="text-[10px] font-medium leading-none">Alertas</span>
-            {files.length > 0 && <span className="absolute top-1 right-1 sm:right-2 w-2 h-2 bg-[#E60023] rounded-full"></span>}
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === 'history' ? 'text-[#E60023]' : 'text-zinc-400'}`}
-          >
-            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'history' ? "'FILL' 1" : "'FILL' 0" }}>history</span>
-            <span className="text-[10px] font-medium leading-none">Historial</span>
-          </button>
-          <Link href="/admin/users" className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
-            <span className="material-symbols-outlined text-[22px]">manage_accounts</span>
-            <span className="text-[10px] font-medium leading-none">Usuarios</span>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-red-500 transition-all cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[22px]">logout</span>
-            <span className="text-[10px] font-medium leading-none">Salir</span>
-          </button>
-        </div>
-      </nav>
     </div>
   );
 }

@@ -125,10 +125,10 @@ async def request_album(request: Request, album: AlbumCreate):
 
     # Desinfección de Inputs
     clean_title = bleach.clean(album.title, tags=[], strip=True)
-    clean_description = bleach.clean(album.description, tags=[], strip=True)
+    clean_description = bleach.clean(album.description, tags=[], strip=True) if album.description else None
 
     # Insertar en base de datos
-    response = supabase.table("albums").insert({
+    response = supabase_admin.table("albums").insert({
         "user_id": auth_user_id,
         "title": clean_title,
         "description": clean_description,
@@ -155,3 +155,31 @@ async def get_album_detail(request: Request, album_id: str):
         raise HTTPException(status_code=404, detail="Álbum no encontrado.")
     return response.data[0]
 
+
+@router.delete("/{album_id}")
+async def delete_album(request: Request, album_id: str):
+    """
+    Elimina un álbum y todos sus archivos asociados.
+    Solo el propietario puede eliminarlo.
+    """
+    auth_user = get_authenticated_user(request)
+    auth_user_id = get_user_id(auth_user)
+
+    album_check = supabase_admin.table("albums").select("id").eq("id", album_id).eq("user_id", auth_user_id).execute()
+    if not album_check.data:
+        raise HTTPException(status_code=404, detail="Álbum no encontrado o no tienes permiso.")
+
+    # Obtener archivos para borrarlos del storage
+    files_resp = supabase_admin.table("files").select("storage_path").eq("album_id", album_id).execute()
+    if files_resp.data:
+        paths_to_delete = [f["storage_path"] for f in files_resp.data if f.get("storage_path")]
+        if paths_to_delete:
+            try:
+                supabase_admin.storage.from_("secure-gallery-images").remove(paths_to_delete)
+            except Exception as e:
+                print("Error al borrar archivos del storage:", e)
+
+    # Borrar álbum de la base de datos (Supabase se encargará de los archivos si hay foreign key cascade, o simplemente borramos la data aquí)
+    supabase_admin.table("albums").delete().eq("id", album_id).execute()
+
+    return {"message": "Álbum y archivos eliminados exitosamente."}
