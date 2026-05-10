@@ -1,8 +1,23 @@
+te envio as, tengo que ya salir a la chamba
 # 🛡️ SecureFrame Gallery — Software Seguro
 
 **SecureFrame Gallery** es un proyecto integrador enfocado en el *"Desarrollo Seguro de una galería multimedia pública con detección de esteganografía y gestión de riesgos en el SDLC"*.
 
 Este repositorio implementa una solución *Full-Stack* (FastAPI + Next.js + Supabase) que no solo provee una plataforma estética y funcional, sino que está diseñada bajo estrictos principios de **Security by Design** y **Clean Architecture**, mitigando amenazas que van desde ataques XSS hasta vectores avanzados como la exfiltración de datos vía **Esteganografía LSB**.
+
+---
+
+## 📑 Tabla de Contenidos
+
+1. [Estructura del Proyecto](#📁-estructura-del-proyecto)
+2. [Requisitos de Seguridad (RF01-RF05)](#🎯-cumplimiento-de-requisitos-de-seguridad-rf01---rf05)
+3. [Tecnologías](#🏗️-arquitectura-y-tecnologías)
+4. [Instalación](#🚀-guía-de-instalación-y-ejecución-local)
+5. [Scripts de Prueba](#paso-5-scripts-de-prueba-de-seguridad-opcional)
+6. [Documentación de Seguridad](#📚-documentación-de-seguridad)
+7. [Notas de Seguridad](#🔐-notas-de-seguridad-importantes)
+8. [Troubleshooting](#🐛-troubleshooting)
+9. [Quick Start](#🚀-ejecución-rápida-quick-start)
 
 ---
 
@@ -315,7 +330,13 @@ cd SecureFrameGallery-SoftwareSeguro
 ```bash
 # .env (raíz del proyecto)
 SUPABASE_URL="https://tu-proyecto.supabase.co"
-SUPABASE_KEY="tu-service-role-key"    # ⚠️ Usa la service_role key, NO la anon key
+SUPABASE_KEY="tu-service-role-key"    # ⚠️ Usa la service_role key, NO la anon key (copy from Project Settings > API)
+
+# Parámetros de detección de esteganografía (opcionales, con valores por defecto):
+LSB_RATIO_MIN=0.499
+LSB_RATIO_MAX=0.501
+CHI_P_THRESHOLD=0.99
+DCT_VAR_THRESHOLD=10.0
 ```
 
 **Frontend** — crea el archivo `.env.local` dentro de la carpeta `frontend/`:
@@ -327,7 +348,17 @@ NEXT_PUBLIC_SUPABASE_URL="https://tu-proyecto.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="tu-anon-public-key"    # Usa la anon/public key
 ```
 
-> Puedes encontrar estas claves en: Supabase → tu proyecto → **Project Settings** → **API**
+**¿Dónde encontrar las claves?**
+
+1. Ve a [supabase.com](https://supabase.com) → inicia sesión en tu proyecto
+2. En la barra lateral izquierda: **Project Settings** → **API**
+3. Encontrarás:
+   - `URL` → cópiala a `SUPABASE_URL`
+   - `anon public` → cópiala a `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `service_role secret` → cópiala a `SUPABASE_KEY` (⚠️ guárdala, no la compartas)
+   - `JWT Secret` → no se necesita aquí (solo si implementas JWT propio)
+
+> **⚠️ Seguridad:** NUNCA hagas commit de `.env` al repositorio. Está incluido en `.gitignore`.
 
 ---
 
@@ -345,14 +376,40 @@ source venv/bin/activate
 
 # Instalar dependencias
 pip install -r requirements.txt
+# El archivo requirements.txt incluye python-magic-bin (compatible con Windows)
+```
 
-# Iniciar el servidor de desarrollo
+**Verificar instalación:**
+```bash
+# Comprobar que python-magic-bin está instalado
+python -c "import magic; print(magic.__file__)"
+
+# Si falla, instala explícitamente:
+pip install python-magic-bin
+```
+
+**Iniciar el servidor de desarrollo:**
+```bash
 uvicorn app.main:app --reload
 ```
 
-✅ La API estará disponible en **http://localhost:8000**  
-📚 Documentación interactiva (Swagger): **http://localhost:8000/docs**  
-📖 Documentación alternativa (ReDoc): **http://localhost:8000/redoc**
+✅ **La API estará disponible en:**
+- 🌐 **Base URL:** http://localhost:8000
+- 📚 **Swagger (Documentación interactiva):** http://localhost:8000/docs
+- 📖 **ReDoc (Documentación alternativa):** http://localhost:8000/redoc
+
+
+**Verificación rápida:**
+```bash
+# En otra terminal, prueba la API:
+curl http://localhost:8000/docs
+# Deberías ver la página de Swagger UI
+```
+
+**Notas importantes:**
+- El servidor se recarga automáticamente cuando modificas archivos (`--reload`)
+- Si quieres ejecutar en producción, remueve `--reload` y usa `gunicorn` o similar
+- Los logs mostrarán: `Uvicorn running on http://0.0.0.0:8000`
 
 > **Nota para Windows (desarrollo local)**: Si `python-magic` da error, instala también `python-magic-bin`:
 > ```bash
@@ -365,17 +422,46 @@ uvicorn app.main:app --reload
 ### Paso 3: Levantar el Frontend (Next.js)
 
 ```bash
-# Abre una nueva terminal
+# Abre una nueva terminal (mantén el backend corriendo en la otra)
 cd frontend
 
 # Instalar dependencias
 npm install
+# O usa yarn/pnpm si lo prefieres: yarn install o pnpm install
 
 # Iniciar el servidor de desarrollo
 npm run dev
 ```
 
-✅ La aplicación estará disponible en **http://localhost:3000**
+✅ **La aplicación estará disponible en:**
+- 🌐 **Galería Frontend:** http://localhost:3000
+- 📊 **Dashboard:** http://localhost:3000/dashboard
+- 🔐 **Panel Supervisor:** http://localhost:3000/supervisor
+
+**Verificación rápida:**
+```bash
+# En otra terminal, verifica que el frontend se conecta al backend:
+curl http://localhost:3000
+# Deberías obtener el HTML de la aplicación
+```
+
+**Estructura del frontend:**
+```
+frontend/
+├── src/
+│   ├── app/                    # Páginas principales (App Router)
+│   ├── components/             # Componentes React reutilizables
+│   ├── services/               # Clientes HTTP y lógica de negocio
+│   ├── schemas/                # Validación Zod (frontend)
+│   └── lib/                    # Utilidades y configuración
+├── package.json                # Dependencias Node.js
+└── next.config.ts              # Configuración de Next.js y CSP headers
+```
+
+**Notas importantes:**
+- Asegúrate que el backend está corriendo (http://localhost:8000)
+- El frontend usa hot reload automático
+- Si hay errores de conexión, verifica `NEXT_PUBLIC_API_URL` en `.env.local`
 
 ---
 
@@ -388,27 +474,112 @@ Para interactuar rápidamente con la aplicación sin crear usuarios manualmente:
 python create_test_data.py
 ```
 
-Este script crea en tu Supabase:
-- Un **usuario normal** de prueba
-- Un **usuario supervisor** de prueba
+**Este script crea automáticamente:**
+- ✅ Un **usuario normal** de prueba (rol: `user`)
+- ✅ Un **usuario supervisor** de prueba (rol: `supervisor`)
+- ✅ Álbumes de ejemplo
+- ✅ Datos para demostración
 
-Las credenciales se imprimirán en la consola al finalizar.
+**Salida esperada:**
+```
+Creating test data...
+✅ User created: test_user@example.com / password123
+✅ Supervisor created: supervisor@example.com / password123
+✅ Test albums created
+✅ Done!
+```
+
+**Credenciales de prueba:**
+```
+Usuario Normal:
+- Email: test_user@example.com
+- Password: password123
+- Rol: user
+- Acceso: /dashboard, /albums
+
+Supervisor:
+- Email: supervisor@example.com
+- Password: password123
+- Rol: supervisor
+- Acceso: /supervisor, /quarantine, /admin/users
+```
+
+**Notas:**
+- Puedes ejecutar este script múltiples veces (verifica antes de duplicar)
+- Los datos se guardan en la BD de Supabase (no se pierden)
+- Para limpiar, accede a Supabase → SQL Editor y ejecuta: `DELETE FROM auth.users;`
+- El trigger automático de BD eliminará los perfiles asociados
 
 ---
 
 ### Paso 5: Scripts de Prueba de Seguridad (Opcional)
 
-Para verificar que el sistema de detección funciona correctamente:
+Para verificar que el sistema de detección funciona correctamente, disponemos de una suite completa de scripts en la carpeta `scripts/`:
 
+#### 📊 Scripts Disponibles
+
+**Ataques de Esteganografía:**
 ```bash
-# Generar una imagen con esteganografía LSB embebida
-python ataque_imagen.py
+# Generar imagen con esteganografía LSB embebida (requiere input.jpg)
+python scripts/attack_lsb_image.py
+# Salida: lsb_infected.png → debe ir a cuarentena
 
-# Generar un PDF con JavaScript malicioso embebido
-python ataque_pdf.py
+# Generar PDF con archivo oculto embebido (requiere input.pdf)
+python scripts/attack_pdf_embed.py
+# Salida: pdf_embedded_payload.pdf → debe ir a cuarentena
 ```
 
-Luego sube los archivos generados a través de la UI para verificar que el sistema los detecta y envía a cuarentena correctamente.
+**Ataques de Estructura PNG:**
+```bash
+python scripts/generate_invalid_png_crc.py        # PNG con CRC inválido
+python scripts/generate_png_trailing_data.py      # PNG con datos tras IEND
+python scripts/generate_png_missing_iend.py       # PNG sin chunk IEND
+python scripts/generate_fake_png_header.py        # PNG con header incompleto
+python scripts/generate_invalid_jpeg_no_sos.py    # JPEG sin marcador SOS
+```
+
+**Ataques de Estructura JPEG:**
+```bash
+python scripts/generate_jpeg_trailing_data.py     # JPEG con datos tras EOI
+python scripts/generate_jpeg_missing_eoi.py       # JPEG sin marcador EOI
+python scripts/generate_jpeg_with_png_extension.py # JPEG con ext .png
+```
+
+**Pruebas de Metadatos:**
+```bash
+python scripts/generate_exif_gps_jpeg.py          # JPEG con EXIF GPS
+# Verificación: el EXIF debe eliminarse después de subida
+```
+
+#### 🧪 Flujo de Prueba
+
+1. **Generar el archivo de prueba:**
+   ```bash
+   python scripts/attack_lsb_image.py     # Genera lsb_infected.png
+   ```
+
+2. **Subir a través de la UI:**
+   - Accede a http://localhost:3000/dashboard
+   - Crea un nuevo álbum o selecciona uno aprobado
+   - Sube el archivo generado
+
+3. **Verificar resultado:**
+   - El archivo debe marcarse como **sospechoso** (status: "quarantined")
+   - Accede como supervisor en http://localhost:3000/supervisor
+   - Ve a la pestaña "Cuarentena" para revisar el análisis forense
+   - El reporte debe mostrar las técnicas de detección aplicadas
+
+#### 📋 Matriz de Resultados Esperados
+
+| Script | Tipo | Resultado Esperado |
+|---|---|---|
+| `attack_lsb_image.py` | Esteganografía LSB | ⚠️ Cuarentena |
+| `attack_pdf_embed.py` | Archivo embebido | ⚠️ Cuarentena |
+| `generate_invalid_png_crc.py` | Estructura PNG | ❌ Rechazo |
+| `generate_invalid_jpeg_no_sos.py` | Estructura JPEG | ❌ Rechazo |
+| `generate_exif_gps_jpeg.py` | Metadatos EXIF | ✅ Limpieza |
+
+> **Nota:** Ver [scripts/README.md](scripts/README.md) para documentación completa de cada script.
 
 ---
 
@@ -432,12 +603,151 @@ Supervisor              → /supervisor (tab álbumes pendientes + tab cuarenten
 ## 🔐 Notas de Seguridad Importantes
 
 > **`SUPABASE_KEY` del backend**: Usa siempre la **`service_role`** key en el backend (solo vive en el servidor, nunca se expone al navegador). Esta clave permite operaciones administrativas como mover archivos entre buckets.
+> - ⚠️ **NUNCA** utilices la `anon_key` en el backend
+> - ⚠️ **NUNCA** commits `.env` al repositorio
 
 > **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** del frontend: Es segura para el navegador. Solo puede leer datos según las políticas RLS configuradas.
+> - ✅ Se puede exponer al cliente (es la `public/anon key`)
+> - ✅ Las operaciones están limitadas por RLS en la BD
 
 > **CORS**: En producción, cambia `allow_origins=["*"]` en `app/main.py` por los dominios exactos de tu frontend (ej: `["https://mi-app.vercel.app"]`).
+> - Configuración actual: permite todo origen (desarrollo)
+> - Archivo: [app/main.py](app/main.py#L30)
 
-> **Rate Limiting**: Los límites actuales son para desarrollo. En producción considera ajustar `SlowAPI` a límites más estrictos y agregar un backend de almacenamiento (Redis) para persistencia entre reinicios.
+> **Rate Limiting**: Los límites actuales son para desarrollo. En producción considera ajustar `SlowAPI` a límites más estrictos:
+> - Registro: 5 peticiones/min por IP
+> - Álbumes: 10 peticiones/min por IP
+> - Archivo: [app/core/security.py](app/core/security.py)
+
+> **Variables de entorno críticas**:
+> ```
+> SUPABASE_URL=                  # URL del proyecto Supabase
+> SUPABASE_KEY=                  # Service Role Key (SECRETO)
+> LSB_RATIO_MIN=0.499           # Umbral mínimo LSB (tuneable)
+> LSB_RATIO_MAX=0.501           # Umbral máximo LSB (tuneable)
+> CHI_P_THRESHOLD=0.99          # Umbral Chi-square (tuneable)
+> DCT_VAR_THRESHOLD=10.0        # Umbral DCT (tuneable)
+> ```
+
+---
+
+## 🐛 Troubleshooting
+
+### Error: `ModuleNotFoundError: No module named 'magic'`
+**Solución:** En Windows, usa `python-magic-bin`:
+```bash
+pip install python-magic-bin
+```
+
+### Error: `RuntimeError: Unable to download file` (Supabase)
+**Solución:** Verifica que:
+- El archivo existe en el bucket `secure-gallery-images`
+- La `service_role_key` tiene permisos de lectura en Storage
+- El bucket está en modo público o tienes Signed URLs configuradas
+
+### Error: `CORS policy: No 'Access-Control-Allow-Origin' header`
+**Solución:** 
+- Verifica que el backend está corriendo en `http://localhost:8000`
+- El frontend debe estar configurado con `NEXT_PUBLIC_API_URL=http://localhost:8000`
+- Asegúrate que el CORS está configurado en [app/main.py](app/main.py)
+
+### Error: `PydanticValidationError` en validación de archivos
+**Solución:** Verifica que:
+- El archivo no excede 10 MB
+- El MIME type es válido (image/jpeg, image/png, application/pdf)
+- Los magic bytes coinciden con el contenido real del archivo
+
+### Frontend no se conecta al backend
+**Solución:**
+- Verifica que ambos servidores están corriendo:
+  - Backend: `http://localhost:8000/docs` (Swagger)
+  - Frontend: `http://localhost:3000`
+- Reinicia ambos servidores
+- Limpia el cache del navegador (Ctrl+Shift+Del)
+
+---
+
+## 🚀 Ejecución Rápida (Quick Start)
+
+Si ya configuraste Supabase y las variables de entorno:
+
+```bash
+# Terminal 1: Backend
+python -m venv venv
+venv\Scripts\activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Terminal 2: Frontend
+cd frontend
+npm install
+npm run dev
+
+# Terminal 3: Datos de prueba (opcional)
+python create_test_data.py
+```
+
+✅ Accede a:
+- **Frontend:** http://localhost:3000
+- **Backend (API):** http://localhost:8000
+- **Swagger (API docs):** http://localhost:8000/docs
+
+---
+
+## 📖 Referencia de Arquitectura
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SECURE FRAME GALLERY                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐           ┌──────────────┐                   │
+│  │   Frontend   │           │   Backend    │                   │
+│  │ (Next.js)    │◄─HTTP───►│  (FastAPI)   │                   │
+│  │ :3000        │           │  :8000       │                   │
+│  └──────────────┘           └──────┬───────┘                   │
+│       │                             │                           │
+│       │                             │                           │
+│       └──────────►┌─────────────────┴─────────┐                │
+│                   │   SUPABASE (PostgreSQL)   │                │
+│                   │   + Storage Bucket        │                │
+│                   └─────────────────────────┘                 │
+│                                                                  │
+│  Security Layers:                                               │
+│  ├─ JWT Auth (Supabase Auth)                                   │
+│  ├─ RLS (Row Level Security)                                   │
+│  ├─ RBAC (Role-Based Access Control)                           │
+│  ├─ Rate Limiting (SlowAPI)                                    │
+│  ├─ Input Validation (Pydantic + Zod)                          │
+│  ├─ XSS Prevention (Bleach)                                    │
+│  ├─ Steganography Detection (LSB + Chi-square + DCT)           │
+│  └─ CSP Headers (Content-Security-Policy)                      │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📚 Recursos Adicionales
+
+- **Supabase Docs:** https://supabase.com/docs
+- **FastAPI Docs:** https://fastapi.tiangolo.com
+- **Next.js Docs:** https://nextjs.org/docs
+- **OWASP Top 10:** https://owasp.org/www-project-top-ten/
+- **Steganography Research:** Papers en IEEE Xplore sobre LSB embedding detection
+
+---
+
+*Proyecto desarrollado para el curso de **Desarrollo Seguro** — Implementación de una galería multimedia con análisis forense integrado y detección de esteganografía.*
+
+**Integrantes:**
+- Christian Marcelo Acuña Gamboa  
+- Abner David Arboleda Roman  
+- Christian Mateo Bonifaz Vásquez  
+
+**Docente:** Ing. Angel Cudco
+
+**Fecha:** 8 de Mayo del 2026
 
 ---
 
@@ -449,19 +759,67 @@ El backend requiere las siguientes dependencias principales de Python:
 fastapi
 uvicorn[standard]
 python-dotenv
-supabase
+supabase==2.25.0
 passlib[argon2]
 bleach
 slowapi
+python-magic-bin                # Validación de MIME types por magic bytes
 python-magic          # usa python-magic-bin en Windows local
 filetype
 pillow
 numpy
 scipy
-pymupdf
+pymupdf                          # Análisis de PDFs
 python-multipart
 ```
 
+> **Windows:** Si tienes problemas con `python-magic`, asegúrate de usar `python-magic-bin` (está en requirements.txt). No se requiere instalar herramientas externas adicionales.
+
 ---
 
-*Proyecto desarrollado para el curso de **Desarrollo Seguro** — Implementación de una galería multimedia con análisis forense integrado.*
+## 📚 Documentación de Seguridad
+
+Este proyecto incluye análisis detallados de seguridad alineados con los requisitos de la asignatura (RF01 - RF05):
+
+### 📄 Documentos Disponibles
+
+| Documento | Contenido | Ubicación |
+|---|---|---|
+| **SECURITY_ANALYSIS.md** | Análisis exhaustivo de técnicas de detección esteganográfica (LSB, Chi-cuadrado, Pseudo-DCT) | [SECURITY_ANALYSIS.md](SECURITY_ANALYSIS.md) |
+| **SECURITY_QUICK_REFERENCE.md** | Guía rápida de controles de seguridad y matriz OWASP | [SECURITY_QUICK_REFERENCE.md](SECURITY_QUICK_REFERENCE.md) |
+| **analysis_RF01.md** | Análisis detallado: Autenticación y RBAC | [analysis_RF01.md](analysis_RF01.md) |
+| **analysis_RF02.md** | Análisis detallado: Prevención de inyecciones (SQLi, XSS) | [analysis_RF02.md](analysis_RF02.md) |
+| **analysis_RF03.md** | Análisis detallado: Validación de archivos y MIME types | [analysis_RF03.md](analysis_RF03.md) |
+| **analysis_RF04.md** | Análisis detallado: Detección de esteganografía y cuarentena | [analysis_RF04.md](analysis_RF04.md) |
+| **analysis_RF05.md** | Análisis detallado: Seguridad perimetral y cabeceras HTTP | [analysis_RF05.md](analysis_RF05.md) |
+| **doc.md** | Documento integrador: Plan estratégico de seguridad | [doc.md](doc.md) |
+| **formato.md** | Especificación de formatos de respuesta de API | [formato.md](formato.md) |
+
+### 🔍 Técnicas de Detección Implementadas
+
+El motor de análisis de archivos implementa **tres técnicas complementarias** para imágenes:
+
+1. **Análisis de Bit LSB (Least Significant Bit)**
+   - Detecta alteraciones artificiales en el bit menos significativo
+   - Umbral: `0.499 < ratio_ones < 0.501`
+   - Mitigación de falsos positivos mediante rangos estrictos
+
+2. **Ataque Chi-Cuadrado (Pairs of Values - PoV)**
+   - Análisis estadístico de distribución de frecuencias
+   - Detecta regularidad artificial: `p-value > 0.99`
+   - Identifica patrones imposibles en imágenes naturales
+
+3. **Pseudo-DCT (Varianza de Diferencias)**
+   - Análisis de suavidad espacial
+   - Detecta imágenes artificialmente suaves: `varianza < 10.0`
+   - Identifica compresión o alteración de frecuencias
+
+**Para PDFs:**
+- Detección de JavaScript embebido
+- Identificación de widgets con scripts
+- Búsqueda de archivos ocultos
+- Validación de encriptación
+
+→ **Flujo de decisión:** Si alguna técnica detecta sospecha → archivo a cuarentena para revisión del supervisor
+
+---
