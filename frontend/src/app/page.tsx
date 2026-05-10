@@ -104,21 +104,21 @@ export default function PublicGallery() {
     <div className="bg-background text-on-background font-body-md antialiased min-h-screen">
       {/* TopAppBar */}
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_2px_20px_-5px_rgba(0,0,0,0.07)]">
-        <div className="flex items-center gap-4 px-6 py-3.5 max-w-7xl mx-auto">
+        <div className="flex items-center gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-3.5 max-w-7xl mx-auto">
           {/* Logo */}
-          <span className="text-[#E60023] font-bold text-xl tracking-tighter shrink-0">
+          <span className="text-[#E60023] font-bold text-lg sm:text-xl tracking-tighter shrink-0">
             SecureFrame
           </span>
 
-          {/* Contenedor de búsqueda */}
-          <div className="flex-1 w-full max-w-xl mx-auto flex items-center bg-zinc-100 rounded-full h-11 px-4 gap-2 min-w-[270px]">
-            <span className="material-symbols-outlined text-secondary text-[20px] shrink-0">
+          {/* Contenedor de búsqueda — ocupa el espacio disponible, sin min-w fijo */}
+          <div className="flex-1 min-w-0 flex items-center bg-zinc-100 rounded-full h-10 sm:h-11 px-3 sm:px-4 gap-2">
+            <span className="material-symbols-outlined text-secondary text-[18px] sm:text-[20px] shrink-0">
               search
             </span>
 
             <input
-              className="bg-transparent border-none outline-none w-full text-sm text-on-surface placeholder:text-secondary"
-              placeholder="Buscar por álbum o usuario..."
+              className="bg-transparent border-none outline-none w-full text-sm text-on-surface placeholder:text-secondary min-w-0"
+              placeholder="Buscar álbum..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -136,30 +136,35 @@ export default function PublicGallery() {
             )}
           </div>
 
-          {/* Auth buttons */}
+          {/* Auth buttons — solo iconos en móvil, texto completo en sm+ */}
           {user ? (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <Link href="/dashboard">
-                <button className="bg-zinc-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-700 transition-colors cursor-pointer">
+                <button className="hidden sm:block bg-zinc-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-700 transition-colors cursor-pointer">
                   Mi Panel
+                </button>
+                {/* Icono compacto en móvil */}
+                <button className="sm:hidden w-9 h-9 rounded-full bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 transition-colors cursor-pointer">
+                  <span className="material-symbols-outlined text-[20px]">dashboard</span>
                 </button>
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-10 h-10 rounded-full hover:bg-red-50 text-red-500 flex items-center justify-center transition-colors cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-red-50 text-red-500 flex items-center justify-center transition-colors cursor-pointer"
                 title="Cerrar sesión"
               >
-                <span className="material-symbols-outlined">logout</span>
+                <span className="material-symbols-outlined text-[20px]">logout</span>
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <Link href="/login">
-                <button className="bg-zinc-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-700 transition-colors cursor-pointer">
-                  Iniciar Sesión
+                <button className="bg-zinc-900 text-white px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap">
+                  <span className="hidden sm:inline">Iniciar Sesión</span>
+                  <span className="sm:hidden">Login</span>
                 </button>
               </Link>
-              <Link href="/register">
+              <Link href="/register" className="hidden sm:block">
                 <button className="border border-zinc-200 text-zinc-800 px-5 py-2 rounded-full text-sm font-medium hover:bg-zinc-50 transition-colors cursor-pointer">
                   Registrarse
                 </button>
