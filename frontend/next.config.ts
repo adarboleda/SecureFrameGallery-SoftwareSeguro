@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 const scriptSrc = isDev
-  ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-  : "script-src 'self' 'unsafe-inline'";
+  ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live"
+  : "script-src 'self' 'unsafe-inline' https://vercel.live";
 
 // API URL dinámica: usa la variable de entorno en producción, localhost como fallback en desarrollo
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             // connect-src usa NEXT_PUBLIC_API_URL para apuntar al backend correcto (Render en prod, localhost en dev)
-            value: `default-src 'self'; img-src 'self' https://*.supabase.co blob: data:; frame-src 'self' https://*.supabase.co blob: data:; ${scriptSrc}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' ${connectSrcDev} https://*.supabase.co;`,
+            value: `default-src 'self'; img-src 'self' https://*.supabase.co blob: data: https://vercel.live https://vercel.com; frame-src 'self' https://*.supabase.co blob: data: https://vercel.live; ${scriptSrc}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' ${connectSrcDev} https://*.supabase.co https://vercel.live;`,
           },
         ],
       },

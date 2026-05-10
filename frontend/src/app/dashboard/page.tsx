@@ -74,16 +74,9 @@ export default function Dashboard() {
         const enriched = await Promise.all(
           rawAlbums.map(async (album) => {
             try {
-              const res = await fetch(
-                `http://localhost:8000/api/public/albums/${album.id}/my-files?user_id=${userId}`,
-                {
-                  headers: token
-                    ? { Authorization: `Bearer ${token}` }
-                    : undefined,
-                },
+              const json = await apiFetch(
+                `/api/public/albums/${album.id}/my-files?user_id=${userId}`
               );
-              if (!res.ok) return { ...album, preview_url: null };
-              const json = await res.json();
               const cleanImages = (json.files || []).filter(
                 (f: any) => f.type === 'image' && f.status === 'clean'
               );

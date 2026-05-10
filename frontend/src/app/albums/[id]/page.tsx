@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use, useRef, useCallback } from 'react';
 import { fileService } from '@/services/file.service';
+import { apiFetch } from '@/services/api';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -36,16 +37,7 @@ export default function AlbumWorkspace({
 
   const loadFiles = useCallback(async (uid: string, aid: string) => {
     try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      const res = await fetch(
-        `http://localhost:8000/api/public/albums/${aid}/my-files?user_id=${uid}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
-      );
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const json = await res.json();
+      const json = await apiFetch(`/api/public/albums/${aid}/my-files?user_id=${uid}`);
       setFiles(json.files || []);
     } catch (err) {
       console.error('Error cargando archivos:', err);
