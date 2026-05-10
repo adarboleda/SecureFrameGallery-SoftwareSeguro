@@ -298,10 +298,10 @@ export default function SupervisorDashboard() {
         </section>
 
         {/* Tab Switcher */}
-        <div className="flex gap-2 mb-6 bg-secondary-fixed p-1 rounded-full w-fit">
+        <div className="flex gap-2 mb-6 bg-secondary-fixed p-1 rounded-full w-full sm:w-fit overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <button
             onClick={() => setActiveTab('albums')}
-            className={`px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'albums' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
+            className={`shrink-0 whitespace-nowrap px-5 sm:px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'albums' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
           >
             <span className="material-symbols-outlined text-[18px]">photo_library</span>
             Álbumes Pendientes
@@ -309,7 +309,7 @@ export default function SupervisorDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('quarantine')}
-            className={`px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'quarantine' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
+            className={`shrink-0 whitespace-nowrap px-5 sm:px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'quarantine' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
           >
             <span className="material-symbols-outlined text-[18px]">warning</span>
             Cuarentena
@@ -317,7 +317,7 @@ export default function SupervisorDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'history' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
+            className={`shrink-0 whitespace-nowrap px-5 sm:px-6 py-2 rounded-full font-label-md text-label-md transition-all duration-200 cursor-pointer flex items-center gap-2 ${activeTab === 'history' ? 'bg-white shadow text-on-surface' : 'text-secondary hover:text-on-surface'}`}
           >
             <span className="material-symbols-outlined text-[18px]">history</span>
             Historial
@@ -807,43 +807,43 @@ export default function SupervisorDashboard() {
 
       {/* Bottom Navigation (Mobile) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-4">
-        <div className="bg-white/95 backdrop-blur-lg flex justify-around items-center max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] border border-zinc-100">
-          <Link href="/" className="flex flex-col items-center gap-0.5 p-3 rounded-full text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
+        <div className="bg-white/95 backdrop-blur-lg flex justify-between items-center w-full max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] border border-zinc-100 px-2">
+          <Link href="/" className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
             <span className="material-symbols-outlined text-[22px]">home</span>
-            <span className="text-[10px] font-medium">Inicio</span>
+            <span className="text-[10px] font-medium leading-none">Inicio</span>
           </Link>
           <button
             onClick={() => setActiveTab('albums')}
-            className={`flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'albums' ? 'text-[#E60023]' : 'text-zinc-400'}`}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === 'albums' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
             <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'albums' ? "'FILL' 1" : "'FILL' 0" }}>photo_library</span>
-            <span className="text-[10px] font-medium">Álbumes</span>
+            <span className="text-[10px] font-medium leading-none">Álbumes</span>
           </button>
           <button
             onClick={() => setActiveTab('quarantine')}
-            className={`relative flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'quarantine' ? 'text-[#E60023]' : 'text-zinc-400'}`}
+            className={`flex-1 relative flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === 'quarantine' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
             <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'quarantine' ? "'FILL' 1" : "'FILL' 0" }}>security</span>
-            <span className="text-[10px] font-medium">Cuarentena</span>
-            {files.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#E60023] rounded-full"></span>}
+            <span className="text-[10px] font-medium leading-none">Alertas</span>
+            {files.length > 0 && <span className="absolute top-1 right-1 sm:right-2 w-2 h-2 bg-[#E60023] rounded-full"></span>}
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center gap-0.5 p-3 rounded-full transition-all cursor-pointer ${activeTab === 'history' ? 'text-[#E60023]' : 'text-zinc-400'}`}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === 'history' ? 'text-[#E60023]' : 'text-zinc-400'}`}
           >
             <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'history' ? "'FILL' 1" : "'FILL' 0" }}>history</span>
-            <span className="text-[10px] font-medium">Historial</span>
+            <span className="text-[10px] font-medium leading-none">Historial</span>
           </button>
-          <Link href="/admin/users" className="flex flex-col items-center gap-0.5 p-3 rounded-full text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
+          <Link href="/admin/users" className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-900 transition-all cursor-pointer">
             <span className="material-symbols-outlined text-[22px]">manage_accounts</span>
-            <span className="text-[10px] font-medium">Usuarios</span>
+            <span className="text-[10px] font-medium leading-none">Usuarios</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="flex flex-col items-center gap-0.5 p-3 rounded-full text-zinc-400 hover:text-red-500 transition-all cursor-pointer"
+            className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-red-500 transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-[22px]">logout</span>
-            <span className="text-[10px] font-medium">Salir</span>
+            <span className="text-[10px] font-medium leading-none">Salir</span>
           </button>
         </div>
       </nav>

@@ -416,9 +416,9 @@ function QuarantineContent() {
                 const val = fileData.lsb_ratio_ones;
                 const isAnomalous = val != null && val > thresholds.lsb_ratio_min && val < thresholds.lsb_ratio_max;
                 return (
-                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between`}>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
+                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between gap-3`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={`material-symbols-outlined text-[20px] ${isAnomalous ? 'text-red-500' : 'text-green-600'}`}>bar_chart</span>
                         <h4 className="font-bold text-on-surface uppercase text-sm">LSB Ratio</h4>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase ${isAnomalous ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
@@ -429,7 +429,7 @@ function QuarantineContent() {
                         Peligro si el valor cae en el rango [{thresholds.lsb_ratio_min} - {thresholds.lsb_ratio_max}]. Fuera de este rango es seguro.
                       </p>
                     </div>
-                    <div className={`text-2xl font-black tracking-tight ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
+                    <div className={`text-lg sm:text-2xl font-black tracking-tight shrink-0 ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
                       {val?.toFixed(4) ?? 'N/A'}
                     </div>
                   </div>
@@ -441,9 +441,9 @@ function QuarantineContent() {
                 const val = fileData.chi_square_p_value;
                 const isAnomalous = val != null && val > thresholds.chi_p_threshold;
                 return (
-                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between`}>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
+                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between gap-3`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={`material-symbols-outlined text-[20px] ${isAnomalous ? 'text-red-500' : 'text-green-600'}`}>functions</span>
                         <h4 className="font-bold text-on-surface uppercase text-sm">Chi-Square p-value</h4>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase ${isAnomalous ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
@@ -454,7 +454,7 @@ function QuarantineContent() {
                         Peligro si es mayor a {thresholds.chi_p_threshold}. Indica distribución artificial de pixeles.
                       </p>
                     </div>
-                    <div className={`text-2xl font-black tracking-tight ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
+                    <div className={`text-lg sm:text-2xl font-black tracking-tight shrink-0 ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
                       {val?.toFixed(4) ?? 'N/A'}
                     </div>
                   </div>
@@ -466,9 +466,9 @@ function QuarantineContent() {
                 const val = fileData.dct_variance_proxy;
                 const isAnomalous = val != null && val < thresholds.dct_variance_threshold;
                 return (
-                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between`}>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
+                  <div className={`p-4 rounded-xl border-l-4 ${isAnomalous ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'} flex items-center justify-between gap-3`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={`material-symbols-outlined text-[20px] ${isAnomalous ? 'text-red-500' : 'text-green-600'}`}>blur_on</span>
                         <h4 className="font-bold text-on-surface uppercase text-sm">Varianza DCT</h4>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase ${isAnomalous ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
@@ -479,7 +479,7 @@ function QuarantineContent() {
                         Peligro si es menor a {thresholds.dct_variance_threshold}. Indica imagen artificialmente suavizada.
                       </p>
                     </div>
-                    <div className={`text-2xl font-black tracking-tight ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
+                    <div className={`text-lg sm:text-2xl font-black tracking-tight shrink-0 ${isAnomalous ? 'text-red-600' : 'text-green-600'}`}>
                       {val?.toFixed(2) ?? 'N/A'}
                     </div>
                   </div>
@@ -679,21 +679,16 @@ export default function Quarantine() {
       </main>
 
       {/* BottomNavBar (Mobile Only) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 w-full px-4 pb-6 md:hidden">
-        <div className="bg-white/95 backdrop-blur-lg flex justify-around items-center max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.1)] border border-zinc-100">
-          <Link href="/supervisor">
-            <button className="text-zinc-400 hover:bg-zinc-100 rounded-full p-3 transition-colors duration-200 cursor-pointer flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-4">
+        <div className="bg-white/95 backdrop-blur-lg flex justify-center gap-16 items-center w-full max-w-md mx-auto h-16 rounded-full shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] border border-zinc-100">
+          <Link href="/supervisor" className="flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-900 transition-all cursor-pointer">
+            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            <span className="text-[10px] font-medium leading-none">Volver</span>
           </Link>
-          <button className="text-zinc-900 scale-110 p-3 transition-all duration-300 ease-out cursor-pointer flex flex-col items-center justify-center">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              admin_panel_settings
-            </span>
-          </button>
+          <div className="flex flex-col items-center justify-center gap-1 text-[#E60023]">
+            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>admin_panel_settings</span>
+            <span className="text-[10px] font-medium leading-none">Análisis</span>
+          </div>
         </div>
       </nav>
     </div>

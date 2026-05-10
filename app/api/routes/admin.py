@@ -46,8 +46,12 @@ async def update_user_role(user_id: str, supervisor_id: str, new_role: str):
     if new_role not in ["user", "supervisor"]:
         raise HTTPException(status_code=400, detail="Rol inválido. Debe ser 'user' o 'supervisor'.")
     
-    supabase.table("profiles").update({"role": new_role}).eq("id", user_id).execute()
-    return {"message": f"Rol actualizado a '{new_role}'."}
+    result = supabase_admin.table("profiles").update({"role": new_role}).eq("id", user_id).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="No se pudo actualizar el rol. Verifica que el perfil del usuario exista.")
+    
+    return {"message": f"Rol actualizado a '{new_role}'.", "new_role": new_role}
 
 @router.post("/users/{user_id}/suspend")
 async def suspend_user(user_id: str, supervisor_id: str, suspend: bool):

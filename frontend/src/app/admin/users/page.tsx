@@ -50,13 +50,17 @@ export default function UserManagement() {
     setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: true } : u));
 
     try {
-      await fetch(
-        `http://localhost:8000/api/admin/users/${targetUser.id}/role?supervisor_id=${supervisorId}&new_role=${newRole}`,
+      await apiFetch(
+        `/api/admin/users/${targetUser.id}/role?supervisor_id=${supervisorId}&new_role=${newRole}`,
         { method: "PATCH" }
       );
-      setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, role: newRole as "user" | "supervisor", updating: false } : u));
-    } catch (err) {
-      console.error("Error actualizando rol", err);
+      // Only update local state if the server confirmed success
+      setUsers(prev => prev.map(u =>
+        u.id === targetUser.id ? { ...u, role: newRole as "user" | "supervisor", updating: false } : u
+      ));
+    } catch (err: any) {
+      console.error("Error actualizando rol:", err?.message || err);
+      alert(`No se pudo actualizar el rol: ${err?.message || "Error desconocido"}`);
       setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: false } : u));
     }
   };
@@ -68,13 +72,16 @@ export default function UserManagement() {
     setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: true } : u));
 
     try {
-      await fetch(
-        `http://localhost:8000/api/admin/users/${targetUser.id}/suspend?supervisor_id=${supervisorId}&suspend=${!isCurrentlySuspended}`,
+      await apiFetch(
+        `/api/admin/users/${targetUser.id}/suspend?supervisor_id=${supervisorId}&suspend=${!isCurrentlySuspended}`,
         { method: "POST" }
       );
-      setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, is_suspended: !isCurrentlySuspended, updating: false } : u));
-    } catch (err) {
-      console.error("Error al suspender/reactivar usuario", err);
+      setUsers(prev => prev.map(u =>
+        u.id === targetUser.id ? { ...u, is_suspended: !isCurrentlySuspended, updating: false } : u
+      ));
+    } catch (err: any) {
+      console.error("Error al suspender/reactivar usuario:", err?.message || err);
+      alert(`No se pudo cambiar el estado del usuario: ${err?.message || "Error desconocido"}`);
       setUsers(prev => prev.map(u => u.id === targetUser.id ? { ...u, updating: false } : u));
     }
   };
