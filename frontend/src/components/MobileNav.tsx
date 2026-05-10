@@ -11,9 +11,6 @@ export default function MobileNav() {
   const [role, setRole] = useState<'guest' | 'user' | 'supervisor'>('guest');
   const [loading, setLoading] = useState(true);
 
-  // Ocultar el menú inferior en páginas de auth
-  if (pathname === '/login' || pathname === '/register') return null;
-
   useEffect(() => {
     async function loadRole() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -32,6 +29,9 @@ export default function MobileNav() {
     }
     loadRole();
   }, [pathname]);
+
+  // Ocultar el menú inferior en páginas de auth
+  if (pathname === '/login' || pathname === '/register') return null;
 
   if (loading) return null;
 
