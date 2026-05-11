@@ -48,10 +48,6 @@ export default function MobileNav() {
             <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: pathname === '/supervisor' ? "'FILL' 1" : "'FILL' 0" }}>photo_library</span>
             <span className="text-[10px] font-medium leading-none">Panel Sup.</span>
           </Link>
-          <Link href="/quarantine" className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${pathname === '/quarantine' ? 'text-[#E60023]' : 'text-zinc-400'}`}>
-            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: pathname === '/quarantine' ? "'FILL' 1" : "'FILL' 0" }}>security</span>
-            <span className="text-[10px] font-medium leading-none">Cuarentena</span>
-          </Link>
           <Link href="/admin/users" className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${pathname.startsWith('/admin') ? 'text-[#E60023]' : 'text-zinc-400'}`}>
             <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: pathname.startsWith('/admin') ? "'FILL' 1" : "'FILL' 0" }}>manage_accounts</span>
             <span className="text-[10px] font-medium leading-none">Usuarios</span>

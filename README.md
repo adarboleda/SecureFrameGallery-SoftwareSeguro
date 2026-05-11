@@ -381,7 +381,17 @@ npm run dev
 
 ### Paso 4: Datos de Prueba (Opcional)
 
-Para interactuar rápidamente con la aplicación sin crear usuarios manualmente:
+Para interactuar rápidamente con la aplicación sin crear usuarios manualmente, puedes usar las siguientes credenciales pre-generadas en la base de datos:
+
+**Usuario Demo (Usuario Normal)**
+- **Email:** usuario@demo.com
+- **Contraseña:** #Usuario123
+
+**Supervisor Demo (Supervisor)**
+- **Email:** supervisor@demo.com
+- **Contraseña:** #Supervisor123
+
+También puedes ejecutar el siguiente script para generar o regenerar los datos de prueba:
 
 ```bash
 # Desde la raíz del proyecto (con venv activo)
@@ -461,6 +471,42 @@ scipy
 pymupdf
 python-multipart
 ```
+
+---
+
+---
+
+## ☁️ Guía de Despliegue (Producción)
+
+### Backend (Render / VPS)
+1. **Dependencias de Sistema**: Es necesario asegurar que la librería C subyacente para `python-magic` esté instalada. En Linux (Render) esto normalmente es `libmagic1`. En tu `render.yaml` debes incluir la instalación de paquetes del sistema si usas el entorno nativo (ej. `apt-get install libmagic1`), o desplegar vía Docker (`Dockerfile` instalando `libmagic1`).
+2. **Variables de Entorno Necesarias**:
+   - `SUPABASE_URL`: URL del proyecto de Supabase.
+   - `SUPABASE_KEY`: Service role key de Supabase (nunca exponer en el frontend).
+3. **CORS**: Asegurar que en producción solo se permita el origen del frontend (ej. configurando en la lista blanca `https://tu-frontend.vercel.app`).
+4. **Comando de inicio**: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
+
+### Frontend (Vercel)
+1. Conectar el repositorio de GitHub a Vercel y configurar el directorio raíz como `frontend`.
+2. **Variables de Entorno Necesarias**:
+   - `NEXT_PUBLIC_API_URL`: URL del backend en producción (ej. `https://tu-backend.onrender.com`).
+   - `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto de Supabase.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Llave anónima pública de Supabase.
+3. El `next.config.ts` se encargará de ajustar el Content Security Policy (CSP) dinámicamente usando la variable `NEXT_PUBLIC_API_URL`.
+
+---
+
+## 🧠 Justificación técnica de la librería/método elegido para la detección de esteganografía
+
+La detección de esteganografía en el proyecto se realiza mediante una combinación de **Análisis Espacial LSB**, **Prueba Estadística Chi-Cuadrado** y análisis **Pseudo-DCT**. Para implementar estos métodos matemáticos de manera eficiente y segura contra ataques de denegación de servicio (DoS) a nivel de procesamiento, se seleccionaron las librerías **NumPy** y **SciPy**.
+
+**Justificación de los métodos elegidos:**
+- **LSB Espacial (Least Significant Bit):** Es el método más común de esteganografía. Se detecta analizando la entropía o la distribución de 0s y 1s en el bit menos significativo de cada píxel. En imágenes naturales, esta distribución suele estar desbalanceada (dependiendo de la iluminación y los colores). Si hay esteganografía, los bits insertados (que suelen estar encriptados o comprimidos) parecen pseudoaleatorios, llevando el ratio de 1s casi exactamente al 50%.
+- **Chi-Cuadrado (PoV - Pairs of Values):** Analiza la frecuencia de pares de colores (PoV) adyacentes. En imágenes naturales, las frecuencias de valores pares e impares (ej. 2 y 3, 4 y 5) varían ampliamente. La inserción esteganográfica en LSB tiende a igualar estas frecuencias con el tiempo. El ataque Chi-Cuadrado mide matemáticamente esta igualdad antinatural para detectar modificaciones.
+
+**Justificación de las librerías elegidas:**
+- **NumPy:** Permite extraer el plano de bits menos significativo (LSB) de una imagen de forma 100% vectorizada. En lugar de iterar píxel por píxel con bucles `for` nativos de Python (lo cual sería ineficiente, consumiría exceso de memoria, y sería vector de ataque DoS), NumPy aplica operaciones a nivel C subyacente sobre toda la matriz de la imagen instantáneamente.
+- **SciPy (`scipy.stats.chisquare`):** Proporciona implementaciones robustas y optimizadas matemáticamente para realizar la prueba estadística de bondad de ajuste (Chi-Cuadrado). Escribir la fórmula estadística desde cero introduciría altos riesgos de errores en la implementación y no estaría optimizado a bajo nivel, lo cual podría crear cuellos de botella en la API. SciPy maneja estas distribuciones de probabilidad de forma nativa.
 
 ---
 
